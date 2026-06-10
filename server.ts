@@ -8,25 +8,33 @@ import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 dotenv.config();
 
-import pg from "pg";
+// ─────────────────────────────────────────────────────────────
+// CONFIGURACIÓN DE CREDENCIALES (desde variables de entorno)
+// Las claves sensibles se leen de .env.local (no versionado). No deben
+// hardcodearse en el código fuente para evitar exponerlas en el repositorio.
+// ─────────────────────────────────────────────────────────────
 
-const dbPool = new pg.Pool({
-  host: "yk386jub.us-east.database.insforge.app",
-  port: 5432,
-  user: "postgres",
-  password: "eb6162a42ae6ae87216b524568737c5d",
-  database: "insforge",
-  ssl: { rejectUnauthorized: false }
-});
+// URL del proyecto InsForge (no es secreta; se mantiene un valor por defecto).
+const INSFORGE_PROJECT_URL = process.env.INSFORGE_PROJECT_URL || "https://yk386jub.us-east.insforge.app";
+// API key de InsForge: OBLIGATORIA por entorno, sin valor por defecto.
+const INSFORGE_API_KEY = process.env.INSFORGE_API_KEY;
+
+// Validación temprana: si falta la API key, se detiene el arranque con un
+// mensaje claro en lugar de fallar silenciosamente en la primera petición.
+if (!INSFORGE_API_KEY) {
+  throw new Error(
+    "Falta INSFORGE_API_KEY en el entorno. Defínela en .env.local antes de iniciar el servidor."
+  );
+}
 
 const insforge = createAdminClient({
-  baseUrl: process.env.INSFORGE_PROJECT_URL || "https://yk386jub.us-east.insforge.app",
-  apiKey: process.env.INSFORGE_API_KEY || "ik_6ae48909dec34e5d0218718782cdf16b"
+  baseUrl: INSFORGE_PROJECT_URL,
+  apiKey: INSFORGE_API_KEY
 });
 
 const dbClient = createAdminClient({
-  baseUrl: process.env.INSFORGE_PROJECT_URL || "https://yk386jub.us-east.insforge.app",
-  apiKey: process.env.INSFORGE_API_KEY || "ik_6ae48909dec34e5d0218718782cdf16b"
+  baseUrl: INSFORGE_PROJECT_URL,
+  apiKey: INSFORGE_API_KEY
 });
 
 Object.defineProperty(insforge, "database", {
@@ -180,20 +188,10 @@ async function startServer() {
         realUserId = verifyData?.user?.id;
         accessToken = verifyData?.accessToken;
       } else {
-        // Fallback: check if the user is already verified in DB (manually verified via verify_test_user.js)
-        const checkUserRes = await dbPool.query(
-          "SELECT id, email_verified FROM auth.users WHERE email = $1",
-          [email.toLowerCase()]
-        );
-        if (checkUserRes.rows.length > 0 && checkUserRes.rows[0].email_verified) {
-          verifySuccess = true;
-          realUserId = checkUserRes.rows[0].id;
-          accessToken = "mocked-access-token-since-manually-verified";
-          console.log(`[VERIFY FALLBACK] Auto-bypassing verification for ${email} since it's already verified in DB.`);
-        } else {
-          console.error("InsForge verifyEmail error:", verifyError);
-          return res.status(400).json({ error: translateAuthError(verifyError.message) });
-        }
+        // La verificación la gestiona íntegramente InsForge mediante la API key.
+        // Si falla, se devuelve el error traducido al cliente.
+        console.error("InsForge verifyEmail error:", verifyError);
+        return res.status(400).json({ error: translateAuthError(verifyError.message) });
       }
 
       if (!realUserId) {
