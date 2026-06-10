@@ -296,6 +296,7 @@ export default function FinanzasTab({
   const [showCotForm, setShowCotForm] = useState(false);
 
   // Proveedor Form State
+  const [editingProvId, setEditingProvId] = useState<string | null>(null);
   const [provFecha, setProvFecha] = useState(new Date().toISOString().split('T')[0]);
   const [provNombre, setProvNombre] = useState('');
   const [provFactura, setProvFactura] = useState('');
@@ -535,6 +536,30 @@ export default function FinanzasTab({
     const iva = valorMerc * 0.19;
     const ret = provApplyRet ? (valorMerc * 0.025) : 0;
     const totalAPagar = valorMerc + iva - ret;
+
+    if (editingProvId) {
+      const existing = proveedores?.find(p => p.id === editingProvId);
+      if (existing && onUpdateProveedor) {
+        onUpdateProveedor({
+          ...existing,
+          fecha: provFecha,
+          proveedorNombre: provNombre,
+          factura: provFactura,
+          valorMercancia: valorMerc,
+          iva,
+          retencion: ret,
+          totalAPagar,
+          estado: provEstado
+        });
+        alert(`¡Proveedor ${provNombre} actualizado!`);
+        setEditingProvId(null);
+        setShowProvForm(false);
+        setProvNombre('');
+        setProvFactura('');
+        setProvValorMerc('');
+      }
+      return;
+    }
 
     const newProv: ProveedorRecord = {
       id: `PROV-${Math.floor(Math.random() * 8000) + 1000}`,
@@ -2625,6 +2650,10 @@ export default function FinanzasTab({
                   onClick={() => {
                     const nextVal = !showProvForm;
                     setShowProvForm(nextVal);
+                    setEditingProvId(null);
+                    setProvNombre('');
+                    setProvFactura('');
+                    setProvValorMerc('');
                     if (nextVal) {
                       setShowCliForm(false);
                       setShowRcForm(false);
@@ -2689,7 +2718,7 @@ export default function FinanzasTab({
                 <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm animate-fade-in text-xs">
                   <div className="flex items-center gap-2 border-b border-slate-100 pb-3 mb-5">
                     <h3 className="font-display font-bold text-sm text-slate-900">
-                      Creación de Registro de Facturación de Proveedores (Ingreso)
+                      {editingProvId ? 'Editar Registro de Proveedor' : 'Creación de Registro de Facturación de Proveedores (Ingreso)'}
                     </h3>
                   </div>
 
@@ -3009,20 +3038,36 @@ export default function FinanzasTab({
                               </span>
                             </td>
                             <td className="px-4 py-3 text-center">
-                              {prov.estado === 'Pendiente' ? (
+                              <div className="flex gap-1 justify-center">
                                 <button
                                   onClick={() => {
-                                    setUpdatingProvId(prov.id);
-                                    setProvEgresoInput(`CE-${Math.floor(Math.random() * 800) + 1000}`);
-                                    setProvChequeInput('');
+                                    setEditingProvId(prov.id);
+                                    setProvFecha(prov.fecha);
+                                    setProvNombre(prov.proveedorNombre);
+                                    setProvFactura(prov.factura);
+                                    setProvValorMerc(prov.valorMercancia.toString());
+                                    setProvEstado(prov.estado);
+                                    setShowProvForm(true);
                                   }}
-                                  className="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded font-bold border-none cursor-pointer text-[10px] transition-all whitespace-nowrap"
+                                  className="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded font-bold border-none cursor-pointer text-[10px] transition-all whitespace-nowrap"
                                 >
-                                  Pagar Factura
+                                  Editar
                                 </button>
-                              ) : (
-                                <span className="text-emerald-600 font-bold text-[10px] block font-mono">PAGADA 🛡️</span>
-                              )}
+                                {prov.estado === 'Pendiente' ? (
+                                  <button
+                                    onClick={() => {
+                                      setUpdatingProvId(prov.id);
+                                      setProvEgresoInput(`CE-${Math.floor(Math.random() * 800) + 1000}`);
+                                      setProvChequeInput('');
+                                    }}
+                                    className="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded font-bold border-none cursor-pointer text-[10px] transition-all whitespace-nowrap"
+                                  >
+                                    Pagar Factura
+                                  </button>
+                                ) : (
+                                  <span className="text-emerald-600 font-bold text-[10px] block font-mono self-center">PAGADA 💰</span>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         ))

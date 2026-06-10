@@ -589,6 +589,22 @@ export default function App() {
                   "Éxito"
                 );
               }}
+              onUpdateEmployee={(updatedEmp: Empleado) => {
+                setEmpleados(prev => prev.map(e => e.id === updatedEmp.id ? updatedEmp : e));
+                appendLog(
+                  "Agente de RR.HH.",
+                  `Datos del colaborador ${updatedEmp.nombre} actualizados exitosamente.`,
+                  "Éxito"
+                );
+              }}
+              onDeleteEmployee={(id: string) => {
+                setEmpleados(prev => prev.filter(e => e.id !== id));
+                appendLog(
+                  "Agente de RR.HH.",
+                  `Colaborador con ID ${id} eliminado del sistema.`,
+                  "Alerta"
+                );
+              }}
               transacciones={transacciones}
               onAddTransaction={(newTx: Omit<Transaccion, 'id'>) => {
                 const finalTx: Transaccion = {

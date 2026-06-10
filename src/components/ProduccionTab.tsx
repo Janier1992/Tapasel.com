@@ -22,7 +22,8 @@ import {
   DollarSign,
   Calendar,
   Compass,
-  ArrowUpRight
+  ArrowUpRight,
+  Pencil
 } from 'lucide-react';
 import { OrdenProduccion, Transaccion } from '../types';
 import { formatCurrencyCOP as formatCurrency } from '../lib/formatters';
@@ -55,6 +56,149 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
   
   // Tab control inside the Production & Logistics Module
   const [activeSubTab, setActiveSubTab] = useState<'ordenes' | 'logistica'>('ordenes');
+
+  // Edit Order Form state
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
+  const [editOrderProducto, setEditOrderProducto] = useState('');
+  const [editOrderCliente, setEditOrderCliente] = useState('');
+  const [editOrderCantidad, setEditOrderCantidad] = useState(100);
+  const [editOrderOperador, setEditOrderOperador] = useState('');
+  const [editOrderPrioridad, setEditOrderPrioridad] = useState<'Alta' | 'Media' | 'Baja'>('Media');
+  const [editOrderEstado, setEditOrderEstado] = useState<OrdenProduccion['estado']>('Diseño');
+  const [editOrderEficiencia, setEditOrderEficiencia] = useState(95);
+  const [editOrderFechaEntrega, setEditOrderFechaEntrega] = useState('');
+
+  // Edit Shipment Form state
+  const [editingShipmentId, setEditingShipmentId] = useState<string | null>(null);
+  const [editShipmentCliente, setEditShipmentCliente] = useState('');
+  const [editShipmentProducto, setEditShipmentProducto] = useState('');
+  const [editShipmentCantidad, setEditShipmentCantidad] = useState(100);
+  const [editShipmentCarrier, setEditShipmentCarrier] = useState('Servientrega');
+  const [editShipmentTracking, setEditShipmentTracking] = useState('');
+  const [editShipmentDest, setEditShipmentDest] = useState('');
+  const [editShipmentCost, setEditShipmentCost] = useState(240000);
+  const [editShipmentStatus, setEditShipmentStatus] = useState<EnvioLogistico['estadoEnvio']>('En Centro de Acopio');
+  const [editShipmentFecha, setEditShipmentFecha] = useState('');
+  const [editShipmentEstimado, setEditShipmentEstimado] = useState('');
+
+  // Inventory state and handlers
+  interface MaterialInventario {
+    id: string;
+    nombre: string;
+    cantidad: number;
+    unidad: string;
+    nivel: 'Estable' | 'Nivel Crítico' | 'Óptimo';
+    porcentaje: number;
+  }
+
+  const [inventory, setInventory] = useState<MaterialInventario[]>([
+    { id: 'INV-001', nombre: 'Microcontroladores STM32F4', cantidad: 4250, unidad: 'unidades', nivel: 'Estable', porcentaje: 85 },
+    { id: 'INV-002', nombre: 'Módulos de Radiofrecuencia LoraWAN', cantidad: 320, unidad: 'unidades', nivel: 'Nivel Crítico', porcentaje: 28 },
+    { id: 'INV-003', nombre: 'Sustratos de Fibra de Vidrio FR4', cantidad: 12500, unidad: 'm2', nivel: 'Óptimo', porcentaje: 95 }
+  ]);
+
+  const [isInvFormOpen, setIsInvFormOpen] = useState(false);
+  const [newInvNombre, setNewInvNombre] = useState('');
+  const [newInvCantidad, setNewInvCantidad] = useState(100);
+  const [newInvUnidad, setNewInvUnidad] = useState('unidades');
+  const [newInvNivel, setNewInvNivel] = useState<'Estable' | 'Nivel Crítico' | 'Óptimo'>('Estable');
+  const [newInvPorcentaje, setNewInvPorcentaje] = useState(80);
+
+  const [editingInvId, setEditingInvId] = useState<string | null>(null);
+  const [editInvNombre, setEditInvNombre] = useState('');
+  const [editInvCantidad, setEditInvCantidad] = useState(100);
+  const [editInvUnidad, setEditInvUnidad] = useState('unidades');
+  const [editInvNivel, setEditInvNivel] = useState<'Estable' | 'Nivel Crítico' | 'Óptimo'>('Estable');
+  const [editInvPorcentaje, setEditInvPorcentaje] = useState(80);
+
+  const handleEditOrderSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingOrderId) return;
+    setOrders(prev => prev.map(order => {
+      if (order.id === editingOrderId) {
+        return {
+          ...order,
+          producto: editOrderProducto,
+          cliente: editOrderCliente,
+          cantidad: editOrderCantidad,
+          operadorAsignado: editOrderOperador,
+          prioridad: editOrderPrioridad,
+          estado: editOrderEstado,
+          eficienciaEstimada: editOrderEficiencia,
+          fechaEntrega: editOrderFechaEntrega
+        };
+      }
+      return order;
+    }));
+    alert(`Orden de Producción ${editingOrderId} actualizada exitosamente.`);
+    setEditingOrderId(null);
+  };
+
+  const handleEditShipmentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingShipmentId) return;
+    setShipments(prev => prev.map(sh => {
+      if (sh.id === editingShipmentId) {
+        return {
+          ...sh,
+          cliente: editShipmentCliente,
+          producto: editShipmentProducto,
+          cantidad: editShipmentCantidad,
+          transportadora: editShipmentCarrier,
+          guiaSeguimiento: editShipmentTracking,
+          destino: editShipmentDest,
+          costoEnvio: editShipmentCost,
+          estadoEnvio: editShipmentStatus,
+          fechaEnvio: editShipmentFecha,
+          estimadoEntrega: editShipmentEstimado
+        };
+      }
+      return sh;
+    }));
+    alert(`Envío ${editingShipmentId} actualizado exitosamente.`);
+    setEditingShipmentId(null);
+  };
+
+  const handleCreateInvItem = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newInvNombre) return;
+    const newItem: MaterialInventario = {
+      id: `INV-${Math.floor(Math.random() * 900) + 100}`,
+      nombre: newInvNombre,
+      cantidad: Number(newInvCantidad),
+      unidad: newInvUnidad,
+      nivel: newInvNivel,
+      porcentaje: Number(newInvPorcentaje)
+    };
+    setInventory(prev => [...prev, newItem]);
+    setIsInvFormOpen(false);
+    setNewInvNombre('');
+    setNewInvCantidad(100);
+    setNewInvUnidad('unidades');
+    setNewInvNivel('Estable');
+    setNewInvPorcentaje(80);
+    alert(`Material ${newItem.nombre} agregado al inventario exitosamente.`);
+  };
+
+  const handleEditInvSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingInvId) return;
+    setInventory(prev => prev.map(item => {
+      if (item.id === editingInvId) {
+        return {
+          ...item,
+          nombre: editInvNombre,
+          cantidad: editInvCantidad,
+          unidad: editInvUnidad,
+          nivel: editInvNivel,
+          porcentaje: editInvPorcentaje
+        };
+      }
+      return item;
+    }));
+    alert(`Material ${editInvNombre} actualizado exitosamente.`);
+    setEditingInvId(null);
+  };
 
   useEffect(() => {
     const tabMap: Record<string, typeof activeSubTab> = {
@@ -560,6 +704,7 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
                     <th className="p-4">Entrega</th>
                     <th className="p-4 text-center font-bold">Eficiencia</th>
                     <th className="p-4 text-center">Fase / Estado</th>
+                    <th className="p-4 text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-800">
@@ -588,6 +733,49 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
                         <span className={`inline-block px-2.5 py-1 text-[10px] font-mono rounded font-medium ${getStatusBadgeClass(order.estado)}`}>
                           {order.estado}
                         </span>
+                      </td>
+                      <td className="p-4 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            onClick={() => setSelectedOrderId(order.id)}
+                            className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded font-bold text-[10px] transition-all border-none cursor-pointer flex items-center gap-1 shadow-sm"
+                            title="Ver Detalle"
+                          >
+                            <span>Ver</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingOrderId(order.id);
+                              setEditOrderProducto(order.producto);
+                              setEditOrderCliente(order.cliente);
+                              setEditOrderCantidad(order.cantidad);
+                              setEditOrderOperador(order.operadorAsignado);
+                              setEditOrderPrioridad(order.prioridad);
+                              setEditOrderEstado(order.estado);
+                              setEditOrderEficiencia(order.eficienciaEstimada);
+                              setEditOrderFechaEntrega(order.fechaEntrega);
+                            }}
+                            className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded font-bold text-[10px] transition-all border-none cursor-pointer flex items-center gap-1 shadow-sm"
+                            title="Editar Orden"
+                          >
+                            <span>Editar</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm(`¿Está seguro de que desea eliminar la orden ${order.id}?`)) {
+                                setOrders(prev => prev.filter(o => o.id !== order.id));
+                                if (selectedOrderId === order.id) {
+                                  setSelectedOrderId('');
+                                }
+                                alert(`Orden ${order.id} eliminada con éxito.`);
+                              }
+                            }}
+                            className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded font-bold text-[10px] transition-all border-none cursor-pointer flex items-center gap-1 shadow-sm"
+                            title="Eliminar Orden"
+                          >
+                            <span>Eliminar</span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -782,38 +970,148 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
 
             {/* SMT Inventory List details */}
             <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4 text-xs">
-              <h4 className="font-semibold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-2">
-                <Activity className="w-4.5 h-4.5 text-blue-600" />
-                Inventario de Chips SMT (Materiales)
-              </h4>
+              <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                <h4 className="font-semibold text-slate-900 flex items-center gap-2">
+                  <Activity className="w-4.5 h-4.5 text-blue-600" />
+                  Inventario de Chips SMT (Materiales)
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => setIsInvFormOpen(!isInvFormOpen)}
+                  className="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded font-bold text-[10px] border-none cursor-pointer flex items-center gap-1 shadow-sm"
+                  title="Agregar Material"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Nuevo</span>
+                </button>
+              </div>
+
+              {isInvFormOpen && (
+                <form onSubmit={handleCreateInvItem} className="bg-slate-50 border border-slate-200 rounded-lg p-3 space-y-3 animate-fade-in text-[11px]">
+                  <div className="space-y-1">
+                    <label className="font-semibold text-slate-600 block">Nombre del Material:</label>
+                    <input
+                      type="text"
+                      required
+                      value={newInvNombre}
+                      onChange={(e) => setNewInvNombre(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded p-1 text-slate-800 outline-none"
+                      placeholder="Ej. Resistencia SMD 10k"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <label className="font-semibold text-slate-600 block">Cantidad:</label>
+                      <input
+                        type="number"
+                        required
+                        value={newInvCantidad}
+                        onChange={(e) => setNewInvCantidad(Number(e.target.value))}
+                        className="w-full bg-white border border-slate-200 rounded p-1 text-slate-800 outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="font-semibold text-slate-600 block">Unidad:</label>
+                      <input
+                        type="text"
+                        required
+                        value={newInvUnidad}
+                        onChange={(e) => setNewInvUnidad(e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded p-1 text-slate-800 outline-none"
+                        placeholder="Ej. unidades, m2"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <label className="font-semibold text-slate-600 block">Nivel Stock:</label>
+                      <select
+                        value={newInvNivel}
+                        onChange={(e: any) => setNewInvNivel(e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded p-1 text-slate-800 outline-none"
+                      >
+                        <option value="Estable">Estable</option>
+                        <option value="Nivel Crítico">Nivel Crítico</option>
+                        <option value="Óptimo">Óptimo</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="font-semibold text-slate-600 block">Porcentaje (0-100):</label>
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        required
+                        value={newInvPorcentaje}
+                        onChange={(e) => setNewInvPorcentaje(Number(e.target.value))}
+                        className="w-full bg-white border border-slate-200 rounded p-1 text-slate-800 outline-none"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-1.5 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setIsInvFormOpen(false)}
+                      className="px-2 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded border-none cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded border-none cursor-pointer"
+                    >
+                      Guardar
+                    </button>
+                  </div>
+                </form>
+              )}
+
               <div className="space-y-3 font-mono text-[11px]">
-                <div>
-                  <div className="flex justify-between text-slate-700 mb-1">
-                    <span>Microcontroladores STM32F4:</span>
-                    <span className="font-bold text-slate-900">4,250 unidades (Estable)</span>
+                {inventory.map(item => (
+                  <div key={item.id} className="group border-b border-slate-100 pb-2 last:border-0 last:pb-0">
+                    <div className="flex justify-between text-slate-700 mb-1">
+                      <span>{item.nombre}:</span>
+                      <span className="font-bold text-slate-900">{item.cantidad.toLocaleString()} {item.unidad} ({item.nivel})</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${
+                            item.nivel === 'Nivel Crítico' ? 'bg-amber-500' : 'bg-emerald-500'
+                          }`}
+                          style={{ width: `${item.porcentaje}%` }}
+                        />
+                      </div>
+                      <div className="opacity-0 group-hover:opacity-100 flex gap-1 transition-opacity shrink-0 ml-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingInvId(item.id);
+                            setEditInvNombre(item.nombre);
+                            setEditInvCantidad(item.cantidad);
+                            setEditInvUnidad(item.unidad);
+                            setEditInvNivel(item.nivel);
+                            setEditInvPorcentaje(item.porcentaje);
+                          }}
+                          className="px-1.5 py-0.5 bg-amber-500 hover:bg-amber-600 text-white rounded font-bold text-[9px] cursor-pointer border-none"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (confirm(`¿Eliminar ${item.nombre} del inventario?`)) {
+                              setInventory(prev => prev.filter(i => i.id !== item.id));
+                            }
+                          }}
+                          className="px-1.5 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded font-bold text-[9px] cursor-pointer border-none"
+                        >
+                          Eliminar
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-emerald-500 h-full rounded-full" style={{ width: '85%' }} />
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between text-slate-700 mb-1">
-                    <span>Módulos de Radiofrecuencia LoraWAN:</span>
-                    <span className="font-bold text-amber-600">320 unidades (Nivel Crítico)</span>
-                  </div>
-                  <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-amber-500 h-full rounded-full" style={{ width: '28%' }} />
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between text-slate-700 mb-1">
-                    <span>Sustratos de Fibra de Vidrio FR4:</span>
-                    <span className="font-bold text-slate-900">12,500 m2 (Óptimo)</span>
-                  </div>
-                  <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-emerald-500 h-full rounded-full" style={{ width: '95%' }} />
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
 
@@ -995,6 +1293,7 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
                     <th className="p-4">Destino de Entrega</th>
                     <th className="p-4 text-right">Flete COP</th>
                     <th className="p-4 text-center">Estado del Flete</th>
+                    <th className="p-4 text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-800 font-sans">
@@ -1002,7 +1301,7 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
                     <tr 
                       key={ship.id}
                       onClick={() => setSelectedShipmentId(ship.id)}
-                      className={`hover:bg-slate-50 cursor-pointer ${
+                      className={`hover:bg-slate-55 hover:bg-slate-50 cursor-pointer ${
                         selectedShipmentId === ship.id ? 'bg-blue-50/50 border-l-2 border-l-blue-600' : ''
                       }`}
                     >
@@ -1028,6 +1327,51 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
                         <span className={`inline-block px-2 py-0.5 text-[9px] font-mono rounded font-medium ${getLogisticsBadgeClass(ship.estadoEnvio)}`}>
                           {ship.estadoEnvio}
                         </span>
+                      </td>
+                      <td className="p-4 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            onClick={() => setSelectedShipmentId(ship.id)}
+                            className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded font-bold text-[10px] transition-all border-none cursor-pointer flex items-center gap-1 shadow-sm"
+                            title="Ver Detalle"
+                          >
+                            <span>Ver</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingShipmentId(ship.id);
+                              setEditShipmentCliente(ship.cliente);
+                              setEditShipmentProducto(ship.producto);
+                              setEditShipmentCantidad(ship.cantidad);
+                              setEditShipmentCarrier(ship.transportadora);
+                              setEditShipmentTracking(ship.guiaSeguimiento);
+                              setEditShipmentDest(ship.destino);
+                              setEditShipmentCost(ship.costoEnvio);
+                              setEditShipmentStatus(ship.estadoEnvio);
+                              setEditShipmentFecha(ship.fechaEnvio);
+                              setEditShipmentEstimado(ship.estimadoEntrega);
+                            }}
+                            className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded font-bold text-[10px] transition-all border-none cursor-pointer flex items-center gap-1 shadow-sm"
+                            title="Editar Envío"
+                          >
+                            <span>Editar</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm(`¿Está seguro de que desea eliminar el envío ${ship.id}?`)) {
+                                setShipments(prev => prev.filter(s => s.id !== ship.id));
+                                if (selectedShipmentId === ship.id) {
+                                  setSelectedShipmentId('');
+                                }
+                                alert(`Envío ${ship.id} eliminado con éxito.`);
+                              }
+                            }}
+                            className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded font-bold text-[10px] transition-all border-none cursor-pointer flex items-center gap-1 shadow-sm"
+                            title="Eliminar Envío"
+                          >
+                            <span>Eliminar</span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -1189,6 +1533,404 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
 
           </div>
 
+        </div>
+      )}
+
+      {/* Edit Order Modal */}
+      {editingOrderId && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <form onSubmit={handleEditOrderSubmit} className="bg-white border border-slate-200 w-full max-w-md rounded-xl shadow-2xl overflow-hidden animate-fade-in text-slate-800 text-xs text-left">
+            <div className="bg-slate-50 p-4 border-b border-slate-200 flex justify-between items-center">
+              <h3 className="font-display font-bold text-slate-900 text-xs uppercase flex items-center gap-1.5">
+                <Pencil className="w-4 h-4 text-amber-500" />
+                Editar Orden de Producción
+              </h3>
+              <button 
+                type="button" 
+                onClick={() => setEditingOrderId(null)}
+                className="text-xs bg-transparent border-none cursor-pointer text-slate-400 hover:text-slate-600 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              <div className="space-y-1">
+                <label className="block text-xs font-semibold text-slate-700">Nombre del Producto / Tarjeta</label>
+                <input 
+                  type="text" 
+                  required
+                  value={editOrderProducto}
+                  onChange={(e) => setEditOrderProducto(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs font-bold outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-semibold text-slate-700">Cliente Solicitante</label>
+                <input 
+                  type="text" 
+                  required
+                  value={editOrderCliente}
+                  onChange={(e) => setEditOrderCliente(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-700">Cantidad</label>
+                  <input 
+                    type="number" 
+                    required
+                    value={editOrderCantidad}
+                    onChange={(e) => setEditOrderCantidad(Number(e.target.value))}
+                    className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-700">Eficiencia Estimada (%)</label>
+                  <input 
+                    type="number" 
+                    required
+                    min={0}
+                    max={100}
+                    value={editOrderEficiencia}
+                    onChange={(e) => setEditOrderEficiencia(Number(e.target.value))}
+                    className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-semibold text-slate-700">Técnico Asignado</label>
+                <input 
+                  type="text" 
+                  required
+                  value={editOrderOperador}
+                  onChange={(e) => setEditOrderOperador(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-700">Prioridad</label>
+                  <select 
+                    value={editOrderPrioridad}
+                    onChange={(e: any) => setEditOrderPrioridad(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs outline-none focus:border-blue-500"
+                  >
+                    <option value="Alta">Alta</option>
+                    <option value="Media">Media</option>
+                    <option value="Baja">Baja</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-700">Fase / Estado</label>
+                  <select 
+                    value={editOrderEstado}
+                    onChange={(e: any) => setEditOrderEstado(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs outline-none focus:border-blue-500"
+                  >
+                    <option value="Diseño">Diseño</option>
+                    <option value="Ensamble PCB">Ensamble PCB</option>
+                    <option value="Soldadura">Soldadura</option>
+                    <option value="Calidad QA">Calidad QA</option>
+                    <option value="Despachado">Despachado</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-semibold text-slate-700">Fecha de Entrega</label>
+                <input 
+                  type="date" 
+                  required
+                  value={editOrderFechaEntrega}
+                  onChange={(e) => setEditOrderFechaEntrega(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs outline-none focus:border-blue-500"
+                />
+              </div>
+            </div>
+
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2 text-xs font-bold">
+              <button 
+                type="button"
+                onClick={() => setEditingOrderId(null)}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg cursor-pointer border-none"
+              >
+                Cancelar
+              </button>
+              <button 
+                type="submit"
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg cursor-pointer border-none"
+              >
+                Guardar Cambios
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Edit Shipment Modal */}
+      {editingShipmentId && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <form onSubmit={handleEditShipmentSubmit} className="bg-white border border-slate-200 w-full max-w-md rounded-xl shadow-2xl overflow-hidden animate-fade-in text-slate-800 text-xs text-left">
+            <div className="bg-slate-50 p-4 border-b border-slate-200 flex justify-between items-center">
+              <h3 className="font-display font-bold text-slate-900 text-xs uppercase flex items-center gap-1.5">
+                <Pencil className="w-4 h-4 text-amber-500" />
+                Editar Envío / Despacho
+              </h3>
+              <button 
+                type="button" 
+                onClick={() => setEditingShipmentId(null)}
+                className="text-xs bg-transparent border-none cursor-pointer text-slate-400 hover:text-slate-600 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-700">Producto</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={editShipmentProducto}
+                    onChange={(e) => setEditShipmentProducto(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs font-bold outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-700">Cliente</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={editShipmentCliente}
+                    onChange={(e) => setEditShipmentCliente(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-700">Cantidad</label>
+                  <input 
+                    type="number" 
+                    required
+                    value={editShipmentCantidad}
+                    onChange={(e) => setEditShipmentCantidad(Number(e.target.value))}
+                    className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-700">Costo de Envío (COP)</label>
+                  <input 
+                    type="number" 
+                    required
+                    value={editShipmentCost}
+                    onChange={(e) => setEditShipmentCost(Number(e.target.value))}
+                    className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-700">Transportadora</label>
+                  <select 
+                    value={editShipmentCarrier}
+                    onChange={(e) => setEditShipmentCarrier(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs outline-none focus:border-blue-500"
+                  >
+                    <option value="Servientrega">Servientrega (Nacional)</option>
+                    <option value="DHL Express">DHL Express (Aéreo / Internacional)</option>
+                    <option value="Coordinadora">Coordinadora Mercantil</option>
+                    <option value="FedEx">FedEx Colombia</option>
+                    <option value="Envia Col">Envia Transportadora</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-700">Guía de Seguimiento</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={editShipmentTracking}
+                    onChange={(e) => setEditShipmentTracking(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-semibold text-slate-700">Dirección de Destino</label>
+                <input 
+                  type="text" 
+                  required
+                  value={editShipmentDest}
+                  onChange={(e) => setEditShipmentDest(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-700">Fecha Envío</label>
+                  <input 
+                    type="date" 
+                    required
+                    value={editShipmentFecha}
+                    onChange={(e) => setEditShipmentFecha(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-700">Estimado Entrega</label>
+                  <input 
+                    type="date" 
+                    required
+                    value={editShipmentEstimado}
+                    onChange={(e) => setEditShipmentEstimado(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-semibold text-slate-700">Estado de Envío</label>
+                <select 
+                  value={editShipmentStatus}
+                  onChange={(e: any) => setEditShipmentStatus(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs outline-none focus:border-blue-500"
+                >
+                  <option value="En Centro de Acopio">En Centro de Acopio</option>
+                  <option value="En Tránsito">En Tránsito</option>
+                  <option value="En Distribución">En Distribución</option>
+                  <option value="Entregado">Entregado</option>
+                  <option value="Retenido en Aduana">Retenido en Aduana</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2 text-xs font-bold">
+              <button 
+                type="button"
+                onClick={() => setEditingShipmentId(null)}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg cursor-pointer border-none"
+              >
+                Cancelar
+              </button>
+              <button 
+                type="submit"
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg cursor-pointer border-none"
+              >
+                Guardar Cambios
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Edit Inventory Modal */}
+      {editingInvId && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <form onSubmit={handleEditInvSubmit} className="bg-white border border-slate-200 w-full max-w-md rounded-xl shadow-2xl overflow-hidden animate-fade-in text-slate-800 text-xs text-left">
+            <div className="bg-slate-50 p-4 border-b border-slate-200 flex justify-between items-center">
+              <h3 className="font-display font-bold text-slate-900 text-xs uppercase flex items-center gap-1.5">
+                <Pencil className="w-4 h-4 text-amber-500" />
+                Editar Material de Almacén
+              </h3>
+              <button 
+                type="button" 
+                onClick={() => setEditingInvId(null)}
+                className="text-xs bg-transparent border-none cursor-pointer text-slate-400 hover:text-slate-600 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              <div className="space-y-1">
+                <label className="block text-xs font-semibold text-slate-700">Nombre del Material</label>
+                <input 
+                  type="text" 
+                  required
+                  value={editInvNombre}
+                  onChange={(e) => setEditInvNombre(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs font-bold outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-700">Cantidad</label>
+                  <input 
+                    type="number" 
+                    required
+                    value={editInvCantidad}
+                    onChange={(e) => setEditInvCantidad(Number(e.target.value))}
+                    className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-700">Unidad</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={editInvUnidad}
+                    onChange={(e) => setEditInvUnidad(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-700">Nivel Stock</label>
+                  <select 
+                    value={editInvNivel}
+                    onChange={(e: any) => setEditInvNivel(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs outline-none focus:border-blue-500"
+                  >
+                    <option value="Estable">Estable</option>
+                    <option value="Nivel Crítico">Nivel Crítico</option>
+                    <option value="Óptimo">Óptimo</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-700">Porcentaje (0-100)</label>
+                  <input 
+                    type="number" 
+                    min={0}
+                    max={100}
+                    required
+                    value={editInvPorcentaje}
+                    onChange={(e) => setEditInvPorcentaje(Number(e.target.value))}
+                    className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2 text-xs font-bold">
+              <button 
+                type="button"
+                onClick={() => setEditingInvId(null)}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg cursor-pointer border-none"
+              >
+                Cancelar
+              </button>
+              <button 
+                type="submit"
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg cursor-pointer border-none"
+              >
+                Guardar Cambios
+              </button>
+            </div>
+          </form>
         </div>
       )}
 

@@ -49,6 +49,8 @@ interface RRHHTabProps {
   onOpenNewEmployee: () => void;
   onPostAiAssistantQuery: (prompt: string) => void;
   onAddEmployee?: (employee: Empleado) => void;
+  onUpdateEmployee?: (employee: Empleado) => void;
+  onDeleteEmployee?: (id: string) => void;
   transacciones?: Transaccion[];
   onAddTransaction?: (tx: Omit<Transaccion, 'id'>) => void;
   activeTab: string;
@@ -59,6 +61,8 @@ export default function RRHHTab({
   onOpenNewEmployee,
   onPostAiAssistantQuery,
   onAddEmployee,
+  onUpdateEmployee,
+  onDeleteEmployee,
   transacciones = [],
   onAddTransaction,
   activeTab
@@ -70,7 +74,31 @@ export default function RRHHTab({
   const [selectedEmp, setSelectedEmp] = useState<Empleado | null>(null);
   const [activeSubTab, setActiveSubTab] = useState<'directorio' | 'asistencia' | 'novedades' | 'nomina' | 'dashboard'>('directorio');
 
-  // New Quick Employee Onboarding form state
+  // Edit Employee Form state
+  const [editingEmpId, setEditingEmpId] = useState<string | null>(null);
+  const [editEmpNombre, setEditEmpNombre] = useState('');
+  const [editEmpCargo, setEditEmpCargo] = useState('');
+  const [editEmpEmail, setEditEmpEmail] = useState('');
+  const [editEmpTelefono, setEditEmpTelefono] = useState('');
+  const [editEmpSalario, setEditEmpSalario] = useState(0);
+
+  const handleEditEmployeeSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingEmpId || !onUpdateEmployee) return;
+    const empToUpdate = empleados.find(emp => emp.id === editingEmpId);
+    if (empToUpdate) {
+      onUpdateEmployee({
+        ...empToUpdate,
+        nombre: editEmpNombre,
+        cargo: editEmpCargo,
+        email: editEmpEmail,
+        telefono: editEmpTelefono,
+        salario: editEmpSalario
+      });
+      alert(`Colaborador ${editEmpNombre} actualizado correctamente.`);
+      setEditingEmpId(null);
+    }
+  };
   const [showQuickEmpForm, setShowQuickEmpForm] = useState(false);
   const [quickName, setQuickName] = useState('');
   const [quickCargo, setQuickCargo] = useState('');
@@ -2105,7 +2133,35 @@ export default function RRHHTab({
                 <div>
                   <h4 className="text-sm font-semibold text-slate-900">{selectedEmp.nombre}</h4>
                   <p className="text-[11px] text-slate-500 leading-none">{selectedEmp.cargo}</p>
-                  <span className="text-[9px] bg-brand-primary/10 text-brand-primary rounded px-1.5 py-0.5 mt-1 inline-block font-mono font-bold uppercase">{selectedEmp.id}</span>
+                  <div className="flex gap-2 items-center mt-1">
+                    <span className="text-[9px] bg-brand-primary/10 text-brand-primary rounded px-1.5 py-0.5 inline-block font-mono font-bold uppercase">{selectedEmp.id}</span>
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        setEditingEmpId(selectedEmp.id);
+                        setEditEmpNombre(selectedEmp.nombre);
+                        setEditEmpCargo(selectedEmp.cargo);
+                        setEditEmpEmail(selectedEmp.email);
+                        setEditEmpTelefono(selectedEmp.telefono);
+                        setEditEmpSalario(selectedEmp.salario);
+                      }}
+                      className="px-2 py-0.5 bg-amber-500 hover:bg-amber-600 text-white rounded font-bold border-none cursor-pointer text-[9px] transition-all"
+                    >
+                      Editar
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        if (confirm(`¿Eliminar al colaborador ${selectedEmp.nombre}?`)) {
+                          if (onDeleteEmployee) onDeleteEmployee(selectedEmp.id);
+                          setSelectedEmp(null);
+                        }
+                      }}
+                      className="px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded font-bold border-none cursor-pointer text-[9px] transition-all"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -2368,6 +2424,101 @@ export default function RRHHTab({
         )}
  
         </div>
-      </div>
+
+      {/* Modal de Edición de Colaborador */}
+      {editingEmpId && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <form onSubmit={handleEditEmployeeSubmit} className="bg-white border border-slate-200 w-full max-w-md rounded-xl shadow-2xl overflow-hidden animate-fade-in text-slate-800 text-xs text-left">
+            <div className="bg-slate-50 p-4 border-b border-slate-200 flex justify-between items-center">
+              <h3 className="font-display font-bold text-slate-900 text-xs uppercase flex items-center gap-1.5">
+                Editar Perfil Laboral
+              </h3>
+              <button 
+                type="button" 
+                onClick={() => setEditingEmpId(null)}
+                className="text-xs bg-transparent border-none cursor-pointer text-slate-400 hover:text-slate-600 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              <div className="space-y-1">
+                <label className="block text-xs font-semibold text-slate-700">Nombre Completo</label>
+                <input 
+                  type="text" 
+                  required
+                  value={editEmpNombre}
+                  onChange={(e) => setEditEmpNombre(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs font-bold outline-none focus:border-brand-primary"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-semibold text-slate-700">Cargo</label>
+                <input 
+                  type="text" 
+                  required
+                  value={editEmpCargo}
+                  onChange={(e) => setEditEmpCargo(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs outline-none focus:border-brand-primary"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-semibold text-slate-700">Email Corporativo</label>
+                <input 
+                  type="email" 
+                  required
+                  value={editEmpEmail}
+                  onChange={(e) => setEditEmpEmail(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs outline-none focus:border-brand-primary"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-semibold text-slate-700">Teléfono</label>
+                <input 
+                  type="text" 
+                  required
+                  value={editEmpTelefono}
+                  onChange={(e) => setEditEmpTelefono(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs outline-none focus:border-brand-primary"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-semibold text-slate-700">Salario Base (COP)</label>
+                <input 
+                  type="number" 
+                  required
+                  min={0}
+                  value={editEmpSalario}
+                  onChange={(e) => setEditEmpSalario(Number(e.target.value))}
+                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs font-mono outline-none focus:border-brand-primary"
+                />
+              </div>
+            </div>
+
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2 text-xs font-bold">
+              <button 
+                type="button"
+                onClick={() => setEditingEmpId(null)}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg cursor-pointer border-none"
+              >
+                Cancelar
+              </button>
+              <button 
+                type="submit"
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg cursor-pointer border-none"
+              >
+                Guardar Cambios
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+    </div>
   );
 }

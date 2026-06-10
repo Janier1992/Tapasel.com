@@ -15,7 +15,8 @@ import {
   ShieldCheck,
   ChevronRight,
   BrainCircuit,
-  Calendar
+  Calendar,
+  Pencil
 } from 'lucide-react';
 import { Documento, Usuario } from '../types';
 
@@ -46,6 +47,12 @@ export default function DocumentosTab({
   const [selectedDept, setSelectedDept] = useState<'All' | 'Finanzas' | 'RRHH' | 'Operaciones' | 'Legal'>('All');
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
   const [newVersionComment, setNewVersionComment] = useState('');
+  
+  // Edit Form state
+  const [editingDocId, setEditingDocId] = useState<string | null>(null);
+  const [editDocNombre, setEditDocNombre] = useState('');
+  const [editDocDept, setEditDocDept] = useState<'Finanzas' | 'RRHH' | 'Operaciones' | 'Legal'>('Finanzas');
+  const [editDocResp, setEditDocResp] = useState('');
 
   // New Collapsible Document upload form state
   const [showDocForm, setShowDocForm] = useState(false);
@@ -146,6 +153,22 @@ export default function DocumentosTab({
     } else {
       onSancionarVersion(selectedDoc.id, "v1.1.0", newVersionComment);
       setNewVersionComment('');
+    }
+  };
+
+  const handleEditDocumentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingDocId || !onUpdateDocument) return;
+    const docToUpdate = documentos.find(d => d.id === editingDocId);
+    if (docToUpdate) {
+      onUpdateDocument({
+        ...docToUpdate,
+        nombre: editDocNombre,
+        departamento: editDocDept,
+        responsable: editDocResp
+      });
+      alert(`Documento ${editDocNombre} actualizado correctamente.`);
+      setEditingDocId(null);
     }
   };
 
@@ -379,6 +402,19 @@ export default function DocumentosTab({
                             <ArrowRight className="w-3 h-3" />
                             <span>Ver Detalle</span>
                           </button>
+                          <button
+                            onClick={() => {
+                              setEditingDocId(doc.id);
+                              setEditDocNombre(doc.nombre);
+                              setEditDocDept(doc.departamento as any);
+                              setEditDocResp(doc.responsable);
+                            }}
+                            className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded font-bold text-[10px] transition-all border-none cursor-pointer flex items-center gap-1 shadow-sm"
+                            title="Editar Documento"
+                          >
+                            <Pencil className="w-3 h-3" />
+                            <span>Editar</span>
+                          </button>
                           {!isArchivedTab && (
                             <button
                               onClick={() => {
@@ -556,6 +592,81 @@ export default function DocumentosTab({
         )}
 
       </div>
+
+      {/* Edit Document Modal */}
+      {editingDocId && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <form onSubmit={handleEditDocumentSubmit} className="bg-white border border-slate-200 w-full max-w-md rounded-xl shadow-2xl overflow-hidden animate-fade-in text-slate-800 text-xs text-left">
+            <div className="bg-slate-50 p-4 border-b border-slate-200 flex justify-between items-center">
+              <h3 className="font-display font-bold text-slate-900 text-xs uppercase flex items-center gap-1.5">
+                <Pencil className="w-4 h-4 text-amber-500" />
+                Editar Documento
+              </h3>
+              <button 
+                type="button" 
+                onClick={() => setEditingDocId(null)}
+                className="text-xs bg-transparent border-none cursor-pointer text-slate-400 hover:text-slate-600 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              <div className="space-y-1">
+                <label className="block text-xs font-semibold text-slate-700">Nombre del Documento</label>
+                <input 
+                  type="text" 
+                  required
+                  value={editDocNombre}
+                  onChange={(e) => setEditDocNombre(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs font-bold outline-none focus:border-brand-primary"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-semibold text-slate-700">Departamento Asociado</label>
+                <select 
+                  value={editDocDept} 
+                  onChange={(e: any) => setEditDocDept(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs text-slate-800 focus:border-brand-primary outline-none"
+                >
+                  <option value="Finanzas">Finanzas y Presupuesto</option>
+                  <option value="RRHH">Novedades y RRHH</option>
+                  <option value="Operaciones">Operaciones y Cadena de Suministros</option>
+                  <option value="Legal">Legal y Contratos</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-semibold text-slate-700">Responsable / Auditor Autorizado</label>
+                <input 
+                  type="text" 
+                  required
+                  value={editDocResp}
+                  onChange={(e) => setEditDocResp(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs outline-none focus:border-brand-primary"
+                />
+              </div>
+            </div>
+
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2 text-xs font-bold">
+              <button 
+                type="button"
+                onClick={() => setEditingDocId(null)}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg cursor-pointer border-none"
+              >
+                Cancelar
+              </button>
+              <button 
+                type="submit"
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg cursor-pointer border-none"
+              >
+                Guardar Cambios
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
     </div>
   );
