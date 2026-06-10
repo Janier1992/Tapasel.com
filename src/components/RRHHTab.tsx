@@ -962,7 +962,7 @@ export default function RRHHTab({
                       </select>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <div>
                         <label className="text-slate-500 block mb-1">B) Tipo de Novedad:</label>
                         <select 
@@ -991,7 +991,7 @@ export default function RRHHTab({
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <div>
                         <label className="text-slate-500 block mb-1">D) Fecha de Inicio:</label>
                         <input 
@@ -1354,7 +1354,7 @@ export default function RRHHTab({
                           <option value="BBVA Colombia">BBVA Colombia</option>
                         </select>
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div className="space-y-1">
                           <label className="font-semibold text-[10px] text-slate-600">Tipo de Cuenta:</label>
                           <select 

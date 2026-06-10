@@ -3550,7 +3550,7 @@ export default function FinanzasTab({
                         </div>
 
                         {/* Top Letterhead info block */}
-                        <div className="grid grid-cols-2 gap-4 border border-slate-300 p-4 rounded-lg bg-slate-50/50">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border border-slate-300 p-4 rounded-lg bg-slate-50/50">
                           
                           {/* Left Panel: Client meta details */}
                           <div className="space-y-1">

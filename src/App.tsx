@@ -796,7 +796,7 @@ export default function App() {
                 <input required type="text" name="nombre" className="w-full bg-slate-50 dark:bg-slate-200 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-white rounded p-2.5 outline-none focus:border-brand-primary" placeholder="Ej: Sonia Bermudez Arismendy" />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-[10px] font-mono text-brand-primary uppercase font-bold block">Cargo a Desempeñar</label>
                   <input required type="text" name="cargo" className="w-full bg-slate-50 dark:bg-slate-200 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-white rounded p-2.5 outline-none focus:border-brand-primary" placeholder="Ej: Jefe de Soldadura" />
@@ -812,7 +812,7 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-[10px] font-mono text-brand-primary uppercase font-bold block">Email Corporativo</label>
                   <input required type="email" name="email" className="w-full bg-slate-50 dark:bg-slate-200 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-white rounded p-2.5 outline-none focus:border-brand-primary font-mono" placeholder="s.bermudez@tapasel.co" />
@@ -859,7 +859,7 @@ export default function App() {
                 <input required type="text" name="nombre" className="w-full bg-slate-50 dark:bg-slate-200 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-white rounded p-2.5 outline-none focus:border-brand-primary font-mono" placeholder="Certificado_Seguros_Renovacion_Planta" />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-[10px] font-mono text-brand-primary uppercase font-bold block">Departamento Destino</label>
                   <select name="departamento" className="w-full bg-slate-550 bg-slate-50 dark:bg-slate-200 border border-slate-200 dark:border-slate-800 text-xs text-slate-800 dark:text-slate-100 rounded p-2.5 outline-none focus:border-brand-primary">
