@@ -32,12 +32,6 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Configurar y habilitar GitHub Pages
-        uses: actions/configure-pages@v4
-        with:
-          # Habilita Pages automáticamente vía API si aún no está activo.
-          enablement: true
-
       - name: Instalar dependencias
         run: npm ci
 
