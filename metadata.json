@@ -1,0 +1,6 @@
+{
+  "name": "TAPASEL FLOW AI",
+  "description": "Sistema Inteligente de Gestión Empresarial y Analítica Operacional para TAPASEL SAS en Medellín",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

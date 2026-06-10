@@ -1,0 +1,160 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Outfit:wght@100..900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-display: "Outfit", sans-serif;
+
+  /* Brand Colors - Soportando dinámicamente el Rojo Corporativo o el Cian Eléctrico */
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-primary-container: var(--brand-primary-container);
+  --color-brand-corporate: var(--brand-corporate); /* Sello corporativo rojo persistente */
+  --color-brand-secondary: #10b981; /* Verde circuito */
+  --color-brand-secondary-container: #059669;
+  --color-brand-tertiary: #f59e0b; /* Ámbar */
+  --color-brand-tertiary-container: #d97706;
+  --color-brand-error: #ef4444;
+  --color-brand-error-container: #dc2626;
+
+  /* Mapeo dinámico de los colores de Tailwind al tema actual (claro/oscuro) */
+  --color-white: var(--white-theme);
+  --color-slate-50: var(--slate-50-theme);
+  --color-slate-100: var(--slate-100-theme);
+  --color-slate-200: var(--slate-200-theme);
+  --color-slate-300: var(--slate-300-theme);
+  --color-slate-400: var(--slate-400-theme);
+  --color-slate-500: var(--slate-500-theme);
+  --color-slate-600: var(--slate-600-theme);
+  --color-slate-700: var(--slate-700-theme);
+  --color-slate-800: var(--slate-800-theme);
+  --color-slate-900: var(--slate-900-theme);
+  --color-slate-950: var(--slate-950-theme);
+
+  --color-brand-background: var(--brand-background);
+  --color-brand-surface: var(--brand-surface);
+  --color-chart-ingresos: var(--chart-ingresos); /* Color dinámico para ingresos en gráficas */
+  --color-chart-egresos: var(--chart-egresos);   /* Color dinámico para egresos en gráficas */
+}
+
+:root {
+  /* Rojo Corporativo Tapasel para el Tema Claro (original de la compañía) */
+  --brand-primary: #E52521;
+  --brand-primary-container: #C41C18;
+  --brand-primary-glow: rgba(229, 37, 33, 0.15);
+  --brand-corporate: #E52521; /* Sello corporativo rojo */
+
+  /* Colores para Gráficas (Tema Claro) */
+  --chart-ingresos: #10b981; /* Verde esmeralda */
+  --chart-egresos: #f43f5e;  /* Rosa/Rojo suave */
+
+  /* Variables para el Tema Claro (Grayscale Neutro Premium) - Contraste y minimalismo óptimo */
+  --white-theme: #ffffff;
+  --slate-50-theme: #fafafa;
+  --slate-100-theme: #f4f4f5;
+  --slate-200-theme: #e4e4e7;
+  --slate-300-theme: #d4d4d8;
+  --slate-400-theme: #a1a1aa; /* Gris medio elegante */
+  --slate-500-theme: #71717a;
+  --slate-600-theme: #52525b;
+  --slate-700-theme: #27272a;
+  --slate-800-theme: #18181b;
+  --slate-900-theme: #09090b;
+  --slate-950-theme: #020202;
+
+  --brand-background: var(--slate-50-theme);
+  --brand-surface: var(--white-theme);
+
+  /* Glassmorphism para Tema Claro */
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(228, 228, 231, 0.6);
+  --glass-shadow: rgba(9, 9, 11, 0.02);
+}
+
+.dark {
+  /* Púrpura/Indigo premium vanguardista para el Tema Oscuro inspirado en Optix */
+  --brand-primary: #8b5cf6;
+  --brand-primary-container: #7c3aed;
+  --brand-primary-glow: rgba(139, 92, 246, 0.15);
+  --brand-corporate: #FF3B30; /* Sello corporativo rojo */
+
+  /* Colores para Gráficas (Tema Oscuro) */
+  --chart-ingresos: #8b5cf6; /* Morado/Violeta para ingresos */
+  --chart-egresos: #ec4899;   /* Rosa para egresos */
+
+  /* Variables para el Tema Oscuro (Estilo Obsidiana Carbono con Púrpura) */
+  --white-theme: #0e1118;     /* Tarjetas, tablas, modales */
+  --slate-50-theme: #06080c;  /* Fondo profundo puro */
+  --slate-100-theme: #121824;
+  --slate-200-theme: #1c2333;
+  --slate-300-theme: #2e374d;
+  --slate-400-theme: #64748b;
+  --slate-500-theme: #94a3b8;
+  --slate-600-theme: #cbd5e1;
+  --slate-700-theme: #e2e8f0;
+  --slate-800-theme: #f1f5f9;
+  --slate-900-theme: #ffffff;
+  --slate-950-theme: #ffffff;
+
+  --brand-background: var(--slate-50-theme);
+  --brand-surface: var(--white-theme);
+
+  /* Glassmorphism para Tema Oscuro (Obsidiana esmerilado de alta gama) */
+  --glass-bg: rgba(14, 17, 24, 0.8);
+  --glass-border: rgba(46, 55, 77, 0.5);
+  --glass-shadow: rgba(0, 0, 0, 0.6);
+}
+
+body {
+  background-color: var(--brand-background);
+  color: var(--color-slate-700);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Elegant glassmorphic panel styling - Adaptable a Temas */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 32px 0 var(--glass-shadow);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Subtle glow for AI active states - Rojo / Cian */
+.ai-glow {
+  box-shadow: 0 0 25px var(--brand-primary-glow);
+}
+
+/* Custom linear border for luxury look */
+.ai-border-gradient {
+  background: linear-gradient(var(--color-brand-surface), var(--color-brand-surface)) padding-box,
+              linear-gradient(to right, var(--color-brand-primary), var(--color-brand-secondary)) border-box;
+  border: 1px solid transparent;
+}
+
+/* Custom scrollbar to keep layout premium */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--slate-50-theme);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--slate-300-theme);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-primary);
+}
+
+/* Hide scrollbar utility */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
