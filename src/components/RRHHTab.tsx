@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import React, { useState, useEffect } from 'react';
 import { 
   Users, 
@@ -95,7 +96,7 @@ export default function RRHHTab({
         telefono: editEmpTelefono,
         salario: editEmpSalario
       });
-      alert(`Colaborador ${editEmpNombre} actualizado correctamente.`);
+      toast.success(`Colaborador ${editEmpNombre} actualizado correctamente.`);
       setEditingEmpId(null);
     }
   };
@@ -129,7 +130,7 @@ export default function RRHHTab({
       setQuickCargo('');
       setQuickEmail('');
       setShowQuickEmpForm(false);
-      alert(`Colaborador ${quickName} ingresado con éxito en el sistema general ERP.`);
+      toast.success(`Colaborador ${quickName} ingresado con éxito en el sistema general ERP.`);
     }
   };
 
@@ -826,7 +827,7 @@ export default function RRHHTab({
                             } else {
                               targetEmp.asistenciaHoy = { checkIn: '08:00 AM', checkOut: nowText, estado: 'Presente' };
                             }
-                            alert(`¡Marcación de Salida guardada para ${targetEmp.nombre}!`);
+                            toast.success(`¡Marcación de Salida guardada para ${targetEmp.nombre}!`);
                           }}
                           className="py-2 px-3 bg-slate-100 border border-slate-200 hover:bg-slate-200 text-slate-700 font-sans font-bold text-xs rounded transition-all cursor-pointer"
                         >
@@ -973,7 +974,7 @@ export default function RRHHTab({
                       setNoveltyFormDesc('');
                       setNoveltyFormAmount(0);
 
-                      alert(`¡Novedad radicada con Éxito!\nSe ha generado el folio de auditoría digital ${noveltyId} para ${targetEmp.nombre}.\nEl motor de liquidación automatizado ha recalculado el neto de pago.`);
+                      toast.success(`¡Novedad radicada con Éxito!\nSe ha generado el folio de auditoría digital ${noveltyId} para ${targetEmp.nombre}.\nEl motor de liquidación automatizado ha recalculado el neto de pago.`);
                     }}
                     className="space-y-3 font-mono text-[11px]"
                   >
@@ -1113,7 +1114,7 @@ export default function RRHHTab({
                                 <button 
                                   onClick={() => {
                                     setNovedades(prev => prev.filter(n => n.id !== nov.id));
-                                    alert(`Novedad ${nov.id} removida exitosamente.`);
+                                    toast.success(`Novedad ${nov.id} removida exitosamente.`);
                                   }}
                                   className="text-rose-600 hover:text-rose-800 font-bold hover:underline cursor-pointer bg-transparent border-none"
                                 >
@@ -1185,7 +1186,7 @@ export default function RRHHTab({
                             });
                           }
                           
-                          alert(`¡Nómina Procesada con Éxito!\nSe han generado las pólizas quincenales bajo auditoría digital y se registró automáticamente el Egreso en el Libro Contable General.\nValor total liquidado: ${formatCurrency(total)}\nSe ha transmitido el archivo de dispersión bancaria a BANCOLOMBIA.`);
+                          toast.success(`¡Nómina Procesada con Éxito!\nSe han generado las pólizas quincenales bajo auditoría digital y se registró automáticamente el Egreso en el Libro Contable General.\nValor total liquidado: ${formatCurrency(total)}\nSe ha transmitido el archivo de dispersión bancaria a BANCOLOMBIA.`);
                         }, 1800);
                       }}
                       disabled={isProcessingPayroll}
@@ -1232,7 +1233,7 @@ export default function RRHHTab({
                   onSubmit={(e) => {
                     e.preventDefault();
                     if (!pRegName || !pRegCargo || !pRegNumCuenta) {
-                      alert("Por favor complete todos los campos requeridos mínimos (Nombre, Puesto/Cargo y Número de Cuenta).");
+                      toast.error("Por favor complete todos los campos requeridos mínimos (Nombre, Puesto/Cargo y Número de Cuenta).");
                       return;
                     }
 
@@ -1288,7 +1289,7 @@ export default function RRHHTab({
                     setPRegTelefono('');
                     setPRegNumCuenta('');
                     
-                    alert(`¡Inscripción Exitosa!\nEl colaborador ${newEmp.nombre} ha sido inscrito en el sistema de nómina quincenal.\nProceda a liquidar sus haberes.`);
+                    toast.success(`¡Inscripción Exitosa!\nEl colaborador ${newEmp.nombre} ha sido inscrito en el sistema de nómina quincenal.\nProceda a liquidar sus haberes.`);
                   }}
                   className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-4 animate-fade-in text-xs text-slate-700"
                 >
@@ -1929,7 +1930,7 @@ export default function RRHHTab({
                             responsable: 'Sonia Park / Marcus Chen'
                           });
 
-                          alert(`¡Asiento Automático Generado!\nSe ha debitado del fondo de tesorería y registrado un asiento de Egreso por valor de ${formatCurrency(totalPayroll)} en el Libro Diario central.`);
+                          toast.success(`¡Asiento Automático Generado!\nSe ha debitado del fondo de tesorería y registrado un asiento de Egreso por valor de ${formatCurrency(totalPayroll)} en el Libro Diario central.`);
                         }}
                         className="w-full text-center py-1.5 bg-zinc-950 hover:bg-zinc-900 font-semibold text-[10px] text-white rounded cursor-pointer transition-colors border-none"
                       >
@@ -2327,7 +2328,7 @@ export default function RRHHTab({
                                 }
                               }
                             });
-                            alert("¡Anotación guardada en el historial disciplinario bajo auditoría laboral!");
+                            toast.success("¡Anotación guardada en el historial disciplinario bajo auditoría laboral!");
                           }}
                           className="w-full text-center py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded border border-slate-250 border-slate-200 mt-2 text-[10px] font-bold cursor-pointer transition-all"
                         >

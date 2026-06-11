@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Users, 
@@ -474,7 +475,7 @@ export default function FinanzasTab({
   const handleSaveCartera = (e: React.FormEvent) => {
     e.preventDefault();
     if (!cartClienteId || !cartFactura || !cartValorMercancia) {
-      alert("Por favor complete los campos obligatorios: Cliente, Factura y Valor de Mercancía.");
+      toast.error("Por favor complete los campos obligatorios: Cliente, Factura y Valor de Mercancía.");
       return;
     }
 
@@ -512,7 +513,7 @@ export default function FinanzasTab({
 
     if (onAddCartera) {
       onAddCartera(newRecord);
-      alert(`¡Registro de Cartera para Factura #${cartFactura} creado positivamente!`);
+      toast.success(`¡Registro de Cartera para Factura #${cartFactura} creado positivamente!`);
       // Reset State
       setCartFactura('');
       setCartValorMercancia('');
@@ -528,7 +529,7 @@ export default function FinanzasTab({
   const handleSaveProveedor = (e: React.FormEvent) => {
     e.preventDefault();
     if (!provNombre || !provFactura || !provValorMerc) {
-      alert("Por favor complete los campos obligatorios: Proveedor, Factura y Valor de Mercancía.");
+      toast.error("Por favor complete los campos obligatorios: Proveedor, Factura y Valor de Mercancía.");
       return;
     }
 
@@ -551,7 +552,7 @@ export default function FinanzasTab({
           totalAPagar,
           estado: provEstado
         });
-        alert(`¡Proveedor ${provNombre} actualizado!`);
+        toast.success(`¡Proveedor ${provNombre} actualizado!`);
         setEditingProvId(null);
         setShowProvForm(false);
         setProvNombre('');
@@ -578,7 +579,7 @@ export default function FinanzasTab({
 
     if (onAddProveedor) {
       onAddProveedor(newProv);
-      alert(`¡Proveedor / Cuenta por Pagar de ${provNombre} guardado con éxito!`);
+      toast.success(`¡Proveedor / Cuenta por Pagar de ${provNombre} guardado con éxito!`);
       // Reset State
       setProvNombre('');
       setProvFactura('');
@@ -594,7 +595,7 @@ export default function FinanzasTab({
   const handleSaveCotizacion = (e: React.FormEvent) => {
     e.preventDefault();
     if (!cotClienteNombre || !cotReferenciaObra || tempCotItems.length === 0) {
-      alert("Por favor complete los campos obligatorios: Cliente (Señor/a), Obra/Referencia y agregue al menos un producto.");
+      toast.error("Por favor complete los campos obligatorios: Cliente (Señor/a), Obra/Referencia y agregue al menos un producto.");
       return;
     }
 
@@ -625,7 +626,7 @@ export default function FinanzasTab({
 
       if (onUpdateCotizacion) {
         onUpdateCotizacion(updatedCot);
-        alert(`¡Cotización No. ${cotNo} actualizada exitosamente!`);
+        toast.success(`¡Cotización No. ${cotNo} actualizada exitosamente!`);
         
         // Reset State
         setEditingCotId(null);
@@ -660,7 +661,7 @@ export default function FinanzasTab({
 
     if (onAddCotizacion) {
       onAddCotizacion(newCot);
-      alert(`¡Cotización No. ${cotNo} generada exitosamente!`);
+      toast.success(`¡Cotización No. ${cotNo} generada exitosamente!`);
       
       // Reset State
       setCotNo(`COT-${Math.floor(Math.random() * 8000) + 1000}`);
@@ -676,7 +677,7 @@ export default function FinanzasTab({
   const handleUpdatePaymentProveedor = (e: React.FormEvent) => {
     e.preventDefault();
     if (!updatingProvId || !provEgresoInput) {
-      alert("Por favor ingrese el Comprobante de Egreso.");
+      toast.error("Por favor ingrese el Comprobante de Egreso.");
       return;
     }
 
@@ -693,7 +694,7 @@ export default function FinanzasTab({
 
     if (onUpdateProveedor) {
       onUpdateProveedor(updatedProv);
-      alert("¡Registro de Proveedor actualizado a estado 'Cancelado' exitosamente!");
+      toast.success("¡Registro de Proveedor actualizado a estado 'Cancelado' exitosamente!");
       setUpdatingProvId(null);
       setProvEgresoInput('');
       setProvChequeInput('');
@@ -705,7 +706,7 @@ export default function FinanzasTab({
     if (!record) return;
 
     if (!liqRcCancelacion) {
-      alert("Por favor ingrese el número de Recibo de Caja de cancelación (RC CANCELAC).");
+      toast.error("Por favor ingrese el número de Recibo de Caja de cancelación (RC CANCELAC).");
       return;
     }
 
@@ -719,7 +720,7 @@ export default function FinanzasTab({
 
     if (onUpdateCartera) {
       onUpdateCartera(updatedRecord);
-      alert(`¡Factura #${record.factura} liquidada / saldada con éxito en la plataforma!`);
+      toast.success(`¡Factura #${record.factura} liquidada / saldada con éxito en la plataforma!`);
       // Reset State
       setLiquidatingRecordId(null);
       setLiqRcCancelacion('');
@@ -732,7 +733,7 @@ export default function FinanzasTab({
   const handleSaveClient = (e: React.FormEvent) => {
     e.preventDefault();
     if (!cliNombre || !cliNit) {
-      alert("Por favor complete los campos obligatorios: Nombre Completo y NIT o CC.");
+      toast.error("Por favor complete los campos obligatorios: Nombre Completo y NIT o CC.");
       return;
     }
 
@@ -750,7 +751,7 @@ export default function FinanzasTab({
 
     if (onAddCliente) {
       onAddCliente(newCli);
-      alert(`¡Cliente "${cliNombre}" guardado con éxito en la base de datos de TAPASEL S.A.S!`);
+      toast.success(`¡Cliente "${cliNombre}" guardado con éxito en la base de datos de TAPASEL S.A.S!`);
       
       // Reset Client Form
       setCliNombre('');
@@ -761,14 +762,14 @@ export default function FinanzasTab({
       setCliObra('');
       setShowCliForm(false);
     } else {
-      alert("Error: No se encontró el asignador de base de datos.");
+      toast.error("Error: No se encontró el asignador de base de datos.");
     }
   };
 
   const handleSaveReceipt = (e: React.FormEvent) => {
     e.preventDefault();
     if (!rcValor || !rcClienteId) {
-      alert("Por favor, seleccione un Cliente y digite el Valor.");
+      toast.error("Por favor, seleccione un Cliente y digite el Valor.");
       return;
     }
 
@@ -787,7 +788,7 @@ export default function FinanzasTab({
         responsable: 'Alex Mercer'
       });
 
-      alert(`¡Recibo de Caja ${rcNumero} registrado positivamente en contabilidad!`);
+      toast.success(`¡Recibo de Caja ${rcNumero} registrado positivamente en contabilidad!`);
 
       // Reset
       setRcNumero(`RC-${Math.floor(Math.random() * 8000) + 1000}`);
@@ -802,7 +803,7 @@ export default function FinanzasTab({
   const handlePrintReceipt = () => {
     const clientObj = clientes.find(c => c.id === rcClienteId);
     if (!rcClienteId || !rcValor) {
-      alert("Diligencie el recibo de caja seleccionando un cliente y valor antes de imprimir.");
+      toast.error("Diligencie el recibo de caja seleccionando un cliente y valor antes de imprimir.");
       return;
     }
     setPrintedReceiptData({
@@ -821,7 +822,7 @@ export default function FinanzasTab({
   const handleSaveCuentaPorPagar = (e: React.FormEvent) => {
     e.preventDefault();
     if (!cppProveedor || !cppMonto || !cppConcepto) {
-      alert("Por favor complete los campos obligatorios: Proveedor, Valor y Detalle/Concepto.");
+      toast.error("Por favor complete los campos obligatorios: Proveedor, Valor y Detalle/Concepto.");
       return;
     }
 
@@ -836,7 +837,7 @@ export default function FinanzasTab({
         responsable: cppResponsable
       });
 
-      alert(`¡Cuenta por Pagar ${cppCodigo} registrada con éxito para "${cppProveedor}"!`);
+      toast.success(`¡Cuenta por Pagar ${cppCodigo} registrada con éxito para "${cppProveedor}"!`);
 
       // Reset
       setCppCodigo(`FCP-${Math.floor(Math.random() * 8000) + 1000}`);
@@ -850,7 +851,7 @@ export default function FinanzasTab({
   const handleSaveOtherExpenditure = (e: React.FormEvent) => {
     e.preventDefault();
     if (!othConcepto || !othMonto) {
-      alert("Por favor defina el Concepto Complementario y el Monto.");
+      toast.error("Por favor defina el Concepto Complementario y el Monto.");
       return;
     }
 
@@ -865,7 +866,7 @@ export default function FinanzasTab({
         responsable: 'Alex Mercer'
       });
 
-      alert(`¡Otros Egresos / Ajuste registrado!`);
+      toast.success(`¡Otros Egresos / Ajuste registrado!`);
 
       // Reset
       setOthConcepto('');
@@ -2182,7 +2183,7 @@ export default function FinanzasTab({
                                 <button
                                   onClick={() => {
                                     onSettleTransaction(item.id);
-                                    alert(`¡Cuenta por Pagar ${item.id} pagada y conciliada exitosamente en bancos!`);
+                                    toast.success(`¡Cuenta por Pagar ${item.id} pagada y conciliada exitosamente en bancos!`);
                                   }}
                                   className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded border-none font-bold cursor-pointer transition-colors text-[10px] shadow-sm shadow-emerald-600/10"
                                 >
@@ -3292,7 +3293,7 @@ export default function FinanzasTab({
                           type="button"
                           onClick={() => {
                             if (!itemDesc || !itemCant || !itemValUnit) {
-                              alert("Defina descripción, cantidad y valor unitario del producto.");
+                              toast.error("Defina descripción, cantidad y valor unitario del producto.");
                               return;
                             }
                             const newItem = {
@@ -3507,7 +3508,7 @@ export default function FinanzasTab({
                                 </button>
                                 <button
                                   onClick={() => {
-                                    alert(`Simulando exportación de cotización ${cot.cotizacionNo} como archivo Tapasel...`);
+                                    toast.success(`Simulando exportación de cotización ${cot.cotizacionNo} como archivo Tapasel...`);
                                   }}
                                   className="px-2.5 py-1 bg-teal-600 hover:bg-teal-700 text-white rounded font-bold text-[10px] transition-all border-none cursor-pointer flex items-center gap-1 shadow-sm"
                                   title="Exportar Cotización"
@@ -3519,7 +3520,7 @@ export default function FinanzasTab({
                                     if (confirm(`¿Está seguro de que desea eliminar la cotización ${cot.cotizacionNo}?`)) {
                                       if (onDeleteCotizacion) {
                                         onDeleteCotizacion(cot.id);
-                                        alert(`Cotización ${cot.cotizacionNo} eliminada con éxito.`);
+                                        toast.success(`Cotización ${cot.cotizacionNo} eliminada con éxito.`);
                                       }
                                     }
                                   }}
@@ -3843,7 +3844,7 @@ export default function FinanzasTab({
                                   }
                                   setSelectedCotizacion(updatedCot);
                                   setShowSignaturePad(null);
-                                  alert("¡Firma Electrónica estampada positivamente en el ERP!");
+                                  toast.success("¡Firma Electrónica estampada positivamente en el ERP!");
                                 }}
                               />
                             </div>

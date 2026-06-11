@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import React, { useState, useEffect } from 'react';
 import { 
   Bot, 
@@ -178,7 +179,7 @@ export default function App() {
         "Éxito"
       );
     }
-    alert("Resolución autónoma: ¡El flujo de trabajo automatizado para esta alerta se ha completado!");
+    toast.success("Resolución autónoma: ¡El flujo de trabajo automatizado para esta alerta se ha completado!");
   };
 
   // Form Submissions
@@ -367,10 +368,10 @@ export default function App() {
         `OCR Inteligente completado: Indexado y clasificado PDF de forma automática bajo el descriptor ${newDoc.nombre}.`,
         "Éxito"
       );
-      alert("¡Procesamiento completado! El documento ha sido clasificado, verificado y guardado.");
+      toast.success("¡Procesamiento completado! El documento ha sido clasificado, verificado y guardado.");
     } catch (error) {
       setScanningDocument(false);
-      alert("Error al subir el documento.");
+      toast.error("Error al subir el documento.");
     }
   };
 

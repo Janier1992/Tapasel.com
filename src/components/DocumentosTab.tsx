@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import React, { useState } from 'react';
 import { 
   Folder, 
@@ -115,7 +116,7 @@ export default function DocumentosTab({
       setSelectedFile(null);
       setShowDocForm(false);
       setIsUploading(false);
-      alert(`¡Documento ${finalName} radicado satisfactoriamente! Se ha encolado para escaneo neural OCR.`);
+      toast.success(`¡Documento ${finalName} radicado satisfactoriamente! Se ha encolado para escaneo neural OCR.`);
     }
   };
 
@@ -173,7 +174,7 @@ export default function DocumentosTab({
       const nextVer = `v${verParts[0]}.${minor}.0`;
       onSancionarVersion(selectedDoc.id, nextVer, newVersionComment);
       setNewVersionComment('');
-      alert(`Sanción exitosa: Documento ${selectedDoc.nombre} actualizado a la versión ${nextVer} con log de seguridad.`);
+      toast.success(`Sanción exitosa: Documento ${selectedDoc.nombre} actualizado a la versión ${nextVer} con log de seguridad.`);
     } else {
       onSancionarVersion(selectedDoc.id, "v1.1.0", newVersionComment);
       setNewVersionComment('');
@@ -191,7 +192,7 @@ export default function DocumentosTab({
         departamento: editDocDept,
         responsable: editDocResp
       });
-      alert(`Documento ${editDocNombre} actualizado correctamente.`);
+      toast.success(`Documento ${editDocNombre} actualizado correctamente.`);
       setEditingDocId(null);
     }
   };
@@ -465,7 +466,7 @@ export default function DocumentosTab({
                                     estadoVerificacion: 'Verificado',
                                     fechaModificacion: new Date().toISOString().replace('T', ' ').substring(0, 16)
                                   });
-                                  alert(`Documento "${doc.nombre}" verificado e indexado exitosamente en el archivo general.`);
+                                  toast.success(`Documento "${doc.nombre}" verificado e indexado exitosamente en el archivo general.`);
                                   if (selectedDocId === doc.id) {
                                     setSelectedDocId(null);
                                   }
@@ -483,7 +484,7 @@ export default function DocumentosTab({
                               if (confirm(`¿Está seguro de que desea eliminar el documento ${doc.nombre}?`)) {
                                 if (onDeleteDocument) {
                                   onDeleteDocument(doc.id);
-                                  alert(`Documento ${doc.nombre} eliminado con éxito.`);
+                                  toast.success(`Documento ${doc.nombre} eliminado con éxito.`);
                                   if (selectedDocId === doc.id) {
                                     setSelectedDocId(null);
                                   }

@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import React, { useState, useEffect } from 'react';
 import { 
   Cpu, 
@@ -131,7 +132,7 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
       }
       return order;
     }));
-    alert(`Orden de Producción ${editingOrderId} actualizada exitosamente.`);
+    toast.success(`Orden de Producción ${editingOrderId} actualizada exitosamente.`);
     setEditingOrderId(null);
   };
 
@@ -156,7 +157,7 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
       }
       return sh;
     }));
-    alert(`Envío ${editingShipmentId} actualizado exitosamente.`);
+    toast.success(`Envío ${editingShipmentId} actualizado exitosamente.`);
     setEditingShipmentId(null);
   };
 
@@ -181,7 +182,7 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
     setNewInvUnidad('unidades');
     setNewInvNivel('Estable');
     setNewInvPorcentaje(80);
-    alert(`Material ${newItem.nombre} agregado al inventario exitosamente.`);
+    toast.success(`Material ${newItem.nombre} agregado al inventario exitosamente.`);
   };
 
   const handleEditInvSubmit = (e: React.FormEvent) => {
@@ -200,7 +201,7 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
       }
       return item;
     }));
-    alert(`Material ${editInvNombre} actualizado exitosamente.`);
+    toast.success(`Material ${editInvNombre} actualizado exitosamente.`);
     setEditingInvId(null);
   };
 
@@ -314,7 +315,7 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
     setNewPrioridad('Media');
     setNewOperador('');
     
-    alert(`¡Orden de Producción ${newOrder.id} registrada exitosamente!\nFase inicial: Diseño de esquemáticos.`);
+    toast.success(`¡Orden de Producción ${newOrder.id} registrada exitosamente!\nFase inicial: Diseño de esquemáticos.`);
   };
 
   const handleAdvanceProcess = (orderId: string) => {
@@ -338,7 +339,7 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
   const handleRegisterShipment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!shipFormOrderId || !shipFormDest) {
-      alert("Por favor seleccione una Orden de Producción activa y especifique la dirección de destino.");
+      toast.error("Por favor seleccione una Orden de Producción activa y especifique la dirección de destino.");
       return;
     }
 
@@ -400,7 +401,7 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
     setShipFormDest('');
     setShipFormCost(240000);
 
-    alert(`¡Orden de Envío ${newShip.id} registrada exitosamente!\nLa Orden ${shipFormOrderId} ha sido promovida a la fase: Despachado y transferida a la transportadora ${shipFormCarrier}.\nGuía de Seguimiento: ${trackingCode}`);
+    toast.success(`¡Orden de Envío ${newShip.id} registrada exitosamente!\nLa Orden ${shipFormOrderId} ha sido promovida a la fase: Despachado y transferida a la transportadora ${shipFormCarrier}.\nGuía de Seguimiento: ${trackingCode}`);
   };
 
   // Advance logistics shipment status
@@ -775,7 +776,7 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
                                 if (selectedOrderId === order.id) {
                                   setSelectedOrderId('');
                                 }
-                                alert(`Orden ${order.id} eliminada con éxito.`);
+                                toast.success(`Orden ${order.id} eliminada con éxito.`);
                               }
                             }}
                             className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded font-bold text-[10px] transition-all border-none cursor-pointer flex items-center gap-1 shadow-sm"
@@ -1371,7 +1372,7 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
                                 if (selectedShipmentId === ship.id) {
                                   setSelectedShipmentId('');
                                 }
-                                alert(`Envío ${ship.id} eliminado con éxito.`);
+                                toast.success(`Envío ${ship.id} eliminado con éxito.`);
                               }
                             }}
                             className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded font-bold text-[10px] transition-all border-none cursor-pointer flex items-center gap-1 shadow-sm"
@@ -1506,7 +1507,7 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
 
                   <button
                     onClick={() => {
-                      alert(`IMPRIMIENDO RÓTULO LOGÍSTICO COMPLETO DE TASA S.A.S\n========================================\nEnvío ID: ${selectedShipment.id}\nOrden Relacionada: ${selectedShipment.orderId}\nDestinatario: ${selectedShipment.cliente}\nDirección: ${selectedShipment.destino}\nGuía de flete: ${selectedShipment.guiaSeguimiento}\nSoporte por Tapasel Flow IA`);
+                      toast.success(`IMPRIMIENDO RÓTULO LOGÍSTICO COMPLETO DE TASA S.A.S\n========================================\nEnvío ID: ${selectedShipment.id}\nOrden Relacionada: ${selectedShipment.orderId}\nDestinatario: ${selectedShipment.cliente}\nDirección: ${selectedShipment.destino}\nGuía de flete: ${selectedShipment.guiaSeguimiento}\nSoporte por Tapasel Flow IA`);
                     }}
                     className="w-full text-center py-1.5 bg-white hover:bg-slate-100 border border-slate-205 border-slate-200 text-slate-700 font-semibold text-xs rounded cursor-pointer"
                   >

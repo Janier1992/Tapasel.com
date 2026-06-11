@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import React, { useState } from 'react';
 import { 
   DollarSign, 
@@ -220,7 +221,7 @@ export default function DashboardTab({
               <button
                 onClick={() => {
                   setSmtStatus('Parada Programada');
-                  alert("⚠️ Solicitada parada técnica programada en la línea SMT.");
+                  toast.success("⚠️ Solicitada parada técnica programada en la línea SMT.");
                 }}
                 className="w-full py-1.5 px-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 font-semibold text-rose-700 text-[10px] rounded transition-all uppercase tracking-wider cursor-pointer border-none"
               >
@@ -230,7 +231,7 @@ export default function DashboardTab({
               <button
                 onClick={() => {
                   setSmtStatus('Normal');
-                  alert("✅ Reactivada línea SMT de forma normal.");
+                  toast.success("✅ Reactivada línea SMT de forma normal.");
                 }}
                 className="w-full py-1.5 px-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 font-semibold text-emerald-700 text-[10px] rounded transition-all uppercase tracking-wider cursor-pointer border-none"
               >
