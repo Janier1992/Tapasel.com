@@ -1,6 +1,6 @@
 import toast from 'react-hot-toast';
 import React, { useState } from 'react';
-import {  
+import {   
   Folder, 
   FileText, 
   FolderOpen, 
@@ -18,7 +18,11 @@ import {
   BrainCircuit,
   Calendar,
   Pencil
-, Eye, Pencil, Trash, FileDown } from 'lucide-react';
+, Eye, Pencil, Trash, FileDown , Eye, Pencil, Trash, FileDown } from 'lucide-react';
+import { GenericViewModal, GenericEditModal } from './GenericModals';
+import { exportRecordToPDF, exportTableToPDF } from '../utils/pdfExport';
+import { apiDelete } from '../services/backendClient';
+
 import { exportRecordToPDF, exportTableToPDF } from '../utils/pdfExport';
 import toast from 'react-hot-toast';
 import { Documento, Usuario } from '../types';
@@ -47,6 +51,26 @@ export default function DocumentosTab({
   activeTab,
   currentUser
 }: DocumentosTabProps) {
+  const [genericViewRecord, setGenericViewRecord] = useState<any>(null);
+  const [genericEditConfig, setGenericEditConfig] = useState<{record: any, table: string} | null>(null);
+
+  const handleGenericDelete = async (id: string, table: string, stateSetter: Function, currentState: any[]) => {
+    if(confirm('¿Estás seguro de eliminar este registro?')) {
+      try {
+        await apiDelete(table, id);
+        // Si tenemos estado, lo limpiamos, si no, recargamos
+        if (currentState && stateSetter) {
+          stateSetter(currentState.filter((item: any) => item.id !== id));
+        } else {
+          window.location.reload();
+        }
+        toast.success('Registro eliminado');
+      } catch (err: any) {
+        toast.error('Error al eliminar: ' + err.message);
+      }
+    }
+  };
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDept, setSelectedDept] = useState<'All' | 'Finanzas' | 'RRHH' | 'Operaciones' | 'Legal'>('All');
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
@@ -438,80 +462,32 @@ export default function DocumentosTab({
                       )}
                       <td className="p-4 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-center gap-1.5">
-                          <button
-                            onClick={() => setSelectedDocId(doc.id)}
-                            className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded font-bold text-[10px] transition-all border-none cursor-pointer flex items-center gap-1 shadow-sm"
-                            title="Ver Historial y Versiones"
-                          >
-                            <ArrowRight className="w-3 h-3" />
-                            <span>Ver Detalle</span>
-                          </button>
-                          <button
-                            onClick={() => {
-                              setEditingDocId(doc.id);
-                              setEditDocNombre(doc.nombre);
-                              setEditDocDept(doc.departamento as any);
-                              setEditDocResp(doc.responsable);
-                            }}
-                            className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded font-bold text-[10px] transition-all border-none cursor-pointer flex items-center gap-1 shadow-sm"
-                            title="Editar Documento"
-                          >
-                            <Pencil className="w-3 h-3" />
-                            <span>Editar</span>
-                          </button>
-                          {!isArchivedTab && (
-                            <button
-                              onClick={() => {
-                                if (onUpdateDocument) {
-                                  onUpdateDocument({
-                                    ...doc,
-                                    estadoVerificacion: 'Verificado',
-                                    fechaModificacion: new Date().toISOString().replace('T', ' ').substring(0, 16)
-                                  });
-                                  toast.success(`Documento "${doc.nombre}" verificado e indexado exitosamente en el archivo general.`);
-                                  if (selectedDocId === doc.id) {
-                                    setSelectedDocId(null);
-                                  }
-                                }
-                              }}
-                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold text-[10px] transition-all border-none cursor-pointer flex items-center gap-1 shadow-sm"
-                              title="Aprobar / Verificar Documento"
-                            >
-                              <CheckCircle className="w-3 h-3" />
-                              <span>Aprobar</span>
-                            </button>
-                          )}
-                          <button
-                            onClick={() => {
-                              if (confirm(`¿Está seguro de que desea eliminar el documento ${doc.nombre}?`)) {
-                                if (onDeleteDocument) {
-                                  onDeleteDocument(doc.id);
-                                  toast.success(`Documento ${doc.nombre} eliminado con éxito.`);
-                                  if (selectedDocId === doc.id) {
-                                    setSelectedDocId(null);
-                                  }
-                                }
-                              }
-                            }}
-                            className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded font-bold text-[10px] transition-all border-none cursor-pointer flex items-center gap-1 shadow-sm"
-                            title="Eliminar Documento"
-                          >
-                            <span>Eliminar</span>
-                          </button>
-                        </div>
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericViewRecord(doc); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericEditConfig({ record: doc, table: 'filteredDocs' }); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); handleGenericDelete(doc?.id, 'filteredDocs', typeof setFilteredDocs !== 'undefined' ? setFilteredDocs : null, typeof filteredDocs !== 'undefined' ? filteredDocs : null); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                  <Trash className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); exportRecordToPDF(doc, 'Registro_filteredDocs'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                  <FileDown className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
                       </td>
                             <td className="border border-slate-200 px-3 py-1.5 text-center">
                               <div className="flex items-center justify-center gap-1.5">
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericViewRecord(doc); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
                                   <Eye className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericEditConfig({ record: doc, table: 'filteredDocs' }); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
                                   <Pencil className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); handleGenericDelete(doc?.id, 'filteredDocs', typeof setFilteredDocs !== 'undefined' ? setFilteredDocs : null, typeof filteredDocs !== 'undefined' ? filteredDocs : null); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
                                   <Trash className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                <button type="button" onClick={(e) => { e.preventDefault(); exportRecordToPDF(doc, 'Registro_filteredDocs'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
                                   <FileDown className="w-3.5 h-3.5" />
                                 </button>
                               </div>
@@ -525,16 +501,16 @@ export default function DocumentosTab({
                       </td>
                             <td className="border border-slate-200 px-3 py-1.5 text-center">
                               <div className="flex items-center justify-center gap-1.5">
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericViewRecord(doc); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
                                   <Eye className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericEditConfig({ record: doc, table: 'filteredDocs' }); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
                                   <Pencil className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); handleGenericDelete(doc?.id, 'filteredDocs', typeof setFilteredDocs !== 'undefined' ? setFilteredDocs : null, typeof filteredDocs !== 'undefined' ? filteredDocs : null); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
                                   <Trash className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                <button type="button" onClick={(e) => { e.preventDefault(); exportRecordToPDF(doc, 'Registro_filteredDocs'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
                                   <FileDown className="w-3.5 h-3.5" />
                                 </button>
                               </div>
@@ -744,6 +720,19 @@ export default function DocumentosTab({
         </div>
       )}
 
-    </div>
+    
+      <GenericViewModal record={genericViewRecord} onClose={() => setGenericViewRecord(null)} />
+      {genericEditConfig && (
+        <GenericEditModal
+          record={genericEditConfig.record}
+          tableName={genericEditConfig.table}
+          onClose={() => setGenericEditConfig(null)}
+          onSaved={(updated) => {
+            setGenericEditConfig(null);
+            window.location.reload();
+          }}
+        />
+      )}
+      </div>
   );
 }

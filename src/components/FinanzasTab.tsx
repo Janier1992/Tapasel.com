@@ -1,6 +1,6 @@
 import toast from 'react-hot-toast';
 import React, { useState, useEffect, useRef } from 'react';
-import {  
+import {   
   Users, 
   Banknote, 
   FileText, 
@@ -22,7 +22,11 @@ import {
   AlertCircle,
   Clock,
   PrinterCheck
-, Eye, Pencil, Trash, FileDown } from 'lucide-react';
+, Eye, Pencil, Trash, FileDown , Eye, Pencil, Trash, FileDown } from 'lucide-react';
+import { GenericViewModal, GenericEditModal } from './GenericModals';
+import { exportRecordToPDF, exportTableToPDF } from '../utils/pdfExport';
+import { apiDelete } from '../services/backendClient';
+
 import { exportRecordToPDF, exportTableToPDF } from '../utils/pdfExport';
 import toast from 'react-hot-toast';
 import { Transaccion, Cliente, CarteraRecord, ProveedorRecord, CotizacionRecord } from '../types';
@@ -134,6 +138,26 @@ interface SignaturePadProps {
 
 function SignaturePad({ onSave, onCancel, title }: SignaturePadProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [genericViewRecord, setGenericViewRecord] = useState<any>(null);
+  const [genericEditConfig, setGenericEditConfig] = useState<{record: any, table: string} | null>(null);
+
+  const handleGenericDelete = async (id: string, table: string, stateSetter: Function, currentState: any[]) => {
+    if(confirm('¿Estás seguro de eliminar este registro?')) {
+      try {
+        await apiDelete(table, id);
+        // Si tenemos estado, lo limpiamos, si no, recargamos
+        if (currentState && stateSetter) {
+          stateSetter(currentState.filter((item: any) => item.id !== id));
+        } else {
+          window.location.reload();
+        }
+        toast.success('Registro eliminado');
+      } catch (err: any) {
+        toast.error('Error al eliminar: ' + err.message);
+      }
+    }
+  };
+
   const [isDrawing, setIsDrawing] = useState(false);
 
   useEffect(() => {
@@ -1154,16 +1178,16 @@ export default function FinanzasTab({
                             <td className="border border-slate-200 px-3 py-1.5 text-brand-primary font-bold">{c.contacto}</td>
                             <td className="border border-slate-200 px-3 py-1.5 text-center">
                               <div className="flex items-center justify-center gap-1.5">
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericViewRecord(null); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
                                   <Eye className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericEditConfig({ record: null, table: 'unknownArray' }); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
                                   <Pencil className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); handleGenericDelete(null?.id, 'unknownArray', typeof setUnknownArray !== 'undefined' ? setUnknownArray : null, typeof unknownArray !== 'undefined' ? unknownArray : null); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
                                   <Trash className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                <button type="button" onClick={(e) => { e.preventDefault(); exportRecordToPDF(null, 'Registro_unknownArray'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
                                   <FileDown className="w-3.5 h-3.5" />
                                 </button>
                               </div>
@@ -1895,16 +1919,16 @@ export default function FinanzasTab({
                               </td>
                             <td className="border border-slate-200 px-3 py-1.5 text-center">
                               <div className="flex items-center justify-center gap-1.5">
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericViewRecord(null); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
                                   <Eye className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericEditConfig({ record: null, table: 'unknownArray' }); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
                                   <Pencil className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); handleGenericDelete(null?.id, 'unknownArray', typeof setUnknownArray !== 'undefined' ? setUnknownArray : null, typeof unknownArray !== 'undefined' ? unknownArray : null); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
                                   <Trash className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                <button type="button" onClick={(e) => { e.preventDefault(); exportRecordToPDF(null, 'Registro_unknownArray'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
                                   <FileDown className="w-3.5 h-3.5" />
                                 </button>
                               </div>
@@ -1981,16 +2005,16 @@ export default function FinanzasTab({
                                 </td>
                             <td className="border border-slate-200 px-3 py-1.5 text-center">
                               <div className="flex items-center justify-center gap-1.5">
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericViewRecord(null); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
                                   <Eye className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericEditConfig({ record: null, table: 'unknownArray' }); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
                                   <Pencil className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); handleGenericDelete(null?.id, 'unknownArray', typeof setUnknownArray !== 'undefined' ? setUnknownArray : null, typeof unknownArray !== 'undefined' ? unknownArray : null); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
                                   <Trash className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                <button type="button" onClick={(e) => { e.preventDefault(); exportRecordToPDF(null, 'Registro_unknownArray'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
                                   <FileDown className="w-3.5 h-3.5" />
                                 </button>
                               </div>
@@ -2246,16 +2270,16 @@ export default function FinanzasTab({
                             </td>
                             <td className="border border-slate-200 px-3 py-1.5 text-center">
                               <div className="flex items-center justify-center gap-1.5">
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericViewRecord(null); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
                                   <Eye className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericEditConfig({ record: null, table: 'unknownArray' }); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
                                   <Pencil className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); handleGenericDelete(null?.id, 'unknownArray', typeof setUnknownArray !== 'undefined' ? setUnknownArray : null, typeof unknownArray !== 'undefined' ? unknownArray : null); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
                                   <Trash className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                <button type="button" onClick={(e) => { e.preventDefault(); exportRecordToPDF(null, 'Registro_unknownArray'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
                                   <FileDown className="w-3.5 h-3.5" />
                                 </button>
                               </div>
@@ -2269,16 +2293,16 @@ export default function FinanzasTab({
                           </td>
                             <td className="border border-slate-200 px-3 py-1.5 text-center">
                               <div className="flex items-center justify-center gap-1.5">
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericViewRecord(null); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
                                   <Eye className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericEditConfig({ record: null, table: 'unknownArray' }); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
                                   <Pencil className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); handleGenericDelete(null?.id, 'unknownArray', typeof setUnknownArray !== 'undefined' ? setUnknownArray : null, typeof unknownArray !== 'undefined' ? unknownArray : null); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
                                   <Trash className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                <button type="button" onClick={(e) => { e.preventDefault(); exportRecordToPDF(null, 'Registro_unknownArray'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
                                   <FileDown className="w-3.5 h-3.5" />
                                 </button>
                               </div>
@@ -2458,16 +2482,16 @@ export default function FinanzasTab({
                             </td>
                             <td className="border border-slate-200 px-3 py-1.5 text-center">
                               <div className="flex items-center justify-center gap-1.5">
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericViewRecord(null); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
                                   <Eye className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericEditConfig({ record: null, table: 'unknownArray' }); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
                                   <Pencil className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); handleGenericDelete(null?.id, 'unknownArray', typeof setUnknownArray !== 'undefined' ? setUnknownArray : null, typeof unknownArray !== 'undefined' ? unknownArray : null); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
                                   <Trash className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                <button type="button" onClick={(e) => { e.preventDefault(); exportRecordToPDF(null, 'Registro_unknownArray'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
                                   <FileDown className="w-3.5 h-3.5" />
                                 </button>
                               </div>
@@ -2481,16 +2505,16 @@ export default function FinanzasTab({
                           </td>
                             <td className="border border-slate-200 px-3 py-1.5 text-center">
                               <div className="flex items-center justify-center gap-1.5">
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericViewRecord(null); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
                                   <Eye className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericEditConfig({ record: null, table: 'unknownArray' }); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
                                   <Pencil className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); handleGenericDelete(null?.id, 'unknownArray', typeof setUnknownArray !== 'undefined' ? setUnknownArray : null, typeof unknownArray !== 'undefined' ? unknownArray : null); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
                                   <Trash className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                <button type="button" onClick={(e) => { e.preventDefault(); exportRecordToPDF(null, 'Registro_unknownArray'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
                                   <FileDown className="w-3.5 h-3.5" />
                                 </button>
                               </div>
@@ -2707,16 +2731,16 @@ export default function FinanzasTab({
                           </td>
                             <td className="border border-slate-200 px-3 py-1.5 text-center">
                               <div className="flex items-center justify-center gap-1.5">
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericViewRecord(item); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
                                   <Eye className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericEditConfig({ record: item, table: 'paginatedTxs' }); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
                                   <Pencil className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); handleGenericDelete(item?.id, 'paginatedTxs', typeof setPaginatedTxs !== 'undefined' ? setPaginatedTxs : null, typeof paginatedTxs !== 'undefined' ? paginatedTxs : null); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
                                   <Trash className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                <button type="button" onClick={(e) => { e.preventDefault(); exportRecordToPDF(item, 'Registro_paginatedTxs'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
                                   <FileDown className="w-3.5 h-3.5" />
                                 </button>
                               </div>
@@ -2730,16 +2754,16 @@ export default function FinanzasTab({
                           </td>
                             <td className="border border-slate-200 px-3 py-1.5 text-center">
                               <div className="flex items-center justify-center gap-1.5">
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericViewRecord(item); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
                                   <Eye className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericEditConfig({ record: item, table: 'paginatedTxs' }); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
                                   <Pencil className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); handleGenericDelete(item?.id, 'paginatedTxs', typeof setPaginatedTxs !== 'undefined' ? setPaginatedTxs : null, typeof paginatedTxs !== 'undefined' ? paginatedTxs : null); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
                                   <Trash className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                <button type="button" onClick={(e) => { e.preventDefault(); exportRecordToPDF(item, 'Registro_paginatedTxs'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
                                   <FileDown className="w-3.5 h-3.5" />
                                 </button>
                               </div>
@@ -3221,16 +3245,16 @@ export default function FinanzasTab({
                             </td>
                             <td className="border border-slate-200 px-3 py-1.5 text-center">
                               <div className="flex items-center justify-center gap-1.5">
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericViewRecord(null); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
                                   <Eye className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericEditConfig({ record: null, table: 'unknownArray' }); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
                                   <Pencil className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); handleGenericDelete(null?.id, 'unknownArray', typeof setUnknownArray !== 'undefined' ? setUnknownArray : null, typeof unknownArray !== 'undefined' ? unknownArray : null); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
                                   <Trash className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                <button type="button" onClick={(e) => { e.preventDefault(); exportRecordToPDF(null, 'Registro_unknownArray'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
                                   <FileDown className="w-3.5 h-3.5" />
                                 </button>
                               </div>
@@ -3249,16 +3273,16 @@ export default function FinanzasTab({
                         </td>
                             <td className="border border-slate-200 px-3 py-1.5 text-center">
                               <div className="flex items-center justify-center gap-1.5">
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericViewRecord(null); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
                                   <Eye className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericEditConfig({ record: null, table: 'unknownArray' }); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
                                   <Pencil className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); handleGenericDelete(null?.id, 'unknownArray', typeof setUnknownArray !== 'undefined' ? setUnknownArray : null, typeof unknownArray !== 'undefined' ? unknownArray : null); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
                                   <Trash className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                <button type="button" onClick={(e) => { e.preventDefault(); exportRecordToPDF(null, 'Registro_unknownArray'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
                                   <FileDown className="w-3.5 h-3.5" />
                                 </button>
                               </div>
@@ -3661,69 +3685,32 @@ export default function FinanzasTab({
                             </td>
                             <td className="px-4 py-3 text-center whitespace-nowrap">
                               <div className="flex items-center justify-center gap-1.5">
-                                <button
-                                  onClick={() => setSelectedCotizacion(cot)}
-                                  className="px-2.5 py-1 bg-red-650 hover:bg-slate-900 text-white rounded font-bold text-[10px] transition-all border-none cursor-pointer flex items-center gap-1 shadow-sm"
-                                  title="Ver / Firmar Cotización"
-                                >
-                                  <FileText className="w-3 h-3" />
-                                  <span>Ver / Firmar</span>
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericViewRecord(null); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                  <Eye className="w-3.5 h-3.5" />
                                 </button>
-                                <button
-                                  onClick={() => {
-                                    setEditingCotId(cot.id);
-                                    setCotNo(cot.cotizacionNo);
-                                    setCotFecha(cot.fecha);
-                                    setCotEmpresa(cot.empresa);
-                                    setCotClienteNombre(cot.clienteNombre);
-                                    setCotIngeniero(cot.ingeniero);
-                                    setCotReferenciaObra(cot.referenciaObra);
-                                    setCotDireccion(cot.direccion);
-                                    setTempCotItems(cot.items);
-                                    setShowCotForm(true);
-                                  }}
-                                  className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded font-bold text-[10px] transition-all border-none cursor-pointer flex items-center gap-1 shadow-sm"
-                                  title="Editar Cotización"
-                                >
-                                  <span>Editar</span>
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericEditConfig({ record: null, table: 'unknownArray' }); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                  <Pencil className="w-3.5 h-3.5" />
                                 </button>
-                                <button
-                                  onClick={() => {
-                                    toast.success(`Simulando exportación de cotización ${cot.cotizacionNo} como archivo Tapasel...`);
-                                  }}
-                                  className="px-2.5 py-1 bg-teal-600 hover:bg-teal-700 text-white rounded font-bold text-[10px] transition-all border-none cursor-pointer flex items-center gap-1 shadow-sm"
-                                  title="Exportar Cotización"
-                                >
-                                  <span>Exportar</span>
+                                <button type="button" onClick={(e) => { e.preventDefault(); handleGenericDelete(null?.id, 'unknownArray', typeof setUnknownArray !== 'undefined' ? setUnknownArray : null, typeof unknownArray !== 'undefined' ? unknownArray : null); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                  <Trash className="w-3.5 h-3.5" />
                                 </button>
-                                <button
-                                  onClick={() => {
-                                    if (confirm(`¿Está seguro de que desea eliminar la cotización ${cot.cotizacionNo}?`)) {
-                                      if (onDeleteCotizacion) {
-                                        onDeleteCotizacion(cot.id);
-                                        toast.success(`Cotización ${cot.cotizacionNo} eliminada con éxito.`);
-                                      }
-                                    }
-                                  }}
-                                  className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded font-bold text-[10px] transition-all border-none cursor-pointer flex items-center gap-1 shadow-sm"
-                                  title="Eliminar Cotización"
-                                >
-                                  <span>Eliminar</span>
+                                <button type="button" onClick={(e) => { e.preventDefault(); exportRecordToPDF(null, 'Registro_unknownArray'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                  <FileDown className="w-3.5 h-3.5" />
                                 </button>
                               </div>
                             </td>
                             <td className="border border-slate-200 px-3 py-1.5 text-center">
                               <div className="flex items-center justify-center gap-1.5">
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericViewRecord(null); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
                                   <Eye className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericEditConfig({ record: null, table: 'unknownArray' }); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
                                   <Pencil className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); handleGenericDelete(null?.id, 'unknownArray', typeof setUnknownArray !== 'undefined' ? setUnknownArray : null, typeof unknownArray !== 'undefined' ? unknownArray : null); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
                                   <Trash className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                <button type="button" onClick={(e) => { e.preventDefault(); exportRecordToPDF(null, 'Registro_unknownArray'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
                                   <FileDown className="w-3.5 h-3.5" />
                                 </button>
                               </div>
@@ -3742,16 +3729,16 @@ export default function FinanzasTab({
                           </td>
                             <td className="border border-slate-200 px-3 py-1.5 text-center">
                               <div className="flex items-center justify-center gap-1.5">
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericViewRecord(null); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
                                   <Eye className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericEditConfig({ record: null, table: 'unknownArray' }); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
                                   <Pencil className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); handleGenericDelete(null?.id, 'unknownArray', typeof setUnknownArray !== 'undefined' ? setUnknownArray : null, typeof unknownArray !== 'undefined' ? unknownArray : null); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
                                   <Trash className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                <button type="button" onClick={(e) => { e.preventDefault(); exportRecordToPDF(null, 'Registro_unknownArray'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
                                   <FileDown className="w-3.5 h-3.5" />
                                 </button>
                               </div>
@@ -4265,6 +4252,19 @@ export default function FinanzasTab({
       )}
 
     </div>
-  </div>
+  
+      <GenericViewModal record={genericViewRecord} onClose={() => setGenericViewRecord(null)} />
+      {genericEditConfig && (
+        <GenericEditModal
+          record={genericEditConfig.record}
+          tableName={genericEditConfig.table}
+          onClose={() => setGenericEditConfig(null)}
+          onSaved={(updated) => {
+            setGenericEditConfig(null);
+            window.location.reload();
+          }}
+        />
+      )}
+      </div>
   );
 }
