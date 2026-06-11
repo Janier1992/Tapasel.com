@@ -33,7 +33,7 @@ import {
   PROVEEDORES_INICIALES,
   COTIZACIONES_INICIALES
 } from './mockData';
-import { insforge } from './services/backendClient';
+import { insforge, apiInsert } from './services/backendClient';
 
 // Modular view blocks
 import Sidebar from './components/Sidebar';
@@ -205,7 +205,7 @@ export default function App() {
     setIsReceiptModalOpen(false);
     
     try {
-      await insforge.database.from('transacciones').insert([newRec]);
+      await apiInsert('transacciones', [newRec]);
     } catch (err) {
       console.warn("No se pudo guardar la transacción en InsForge DB", err);
     }
@@ -236,7 +236,7 @@ export default function App() {
     setIsExpenditureModalOpen(false);
     
     try {
-      await insforge.database.from('transacciones').insert([newExp]);
+      await apiInsert('transacciones', [newExp]);
     } catch (err) {
       console.warn("No se pudo guardar la transacción en InsForge DB", err);
     }
@@ -270,7 +270,7 @@ export default function App() {
     setIsEmployeeModalOpen(false);
     
     try {
-      await insforge.database.from('empleados').insert([{
+      await apiInsert('empleados', [{
         id: newEmp.id,
         nombre: newEmp.nombre,
         cargo: newEmp.cargo,
@@ -342,7 +342,7 @@ export default function App() {
       setDocumentos(prev => [newDoc, ...prev]);
       
       try {
-        await insforge.database.from('documentos').insert([{
+        await apiInsert('documentos', [{
           id: newDoc.id,
           nombre: newDoc.nombre,
           departamento: newDoc.departamento,
@@ -560,7 +560,7 @@ export default function App() {
               activeTab={activeTab}
               onAddProveedor={(newProv) => {
                 setProveedores(prev => [newProv, ...prev]);
-                insforge.database.from('proveedores').insert([newProv]).catch(console.warn);
+                apiInsert('proveedores', [newProv]).catch(console.warn);
                 appendLog(
                   "Agente de Finanzas",
                   `Nuevo registro de Proveedor: ${newProv.proveedorNombre} - Factura #${newProv.factura} de $${newProv.totalAPagar.toLocaleString('es-CO')} COP.`,
@@ -577,7 +577,7 @@ export default function App() {
               }}
               onAddCotizacion={(newCot) => {
                 setCotizaciones(prev => [newCot, ...prev]);
-                insforge.database.from('cotizaciones').insert([newCot]).catch(console.warn);
+                apiInsert('cotizaciones', [newCot]).catch(console.warn);
                 appendLog(
                   "Agente de Finanzas",
                   `Nueva Cotización generada: No. ${newCot.cotizacionNo} para ${newCot.clienteNombre} por un total de $${newCot.total.toLocaleString('es-CO')} COP.`,
@@ -606,7 +606,7 @@ export default function App() {
                   id: `${newTx.tipo === 'Ingreso' ? 'REC' : 'EGR'}-${Math.floor(Math.random() * 9000) + 1000}`
                 };
                 setTransacciones(prev => [finalTx, ...prev]);
-                insforge.database.from('transacciones').insert([finalTx]).catch(console.warn);
+                apiInsert('transacciones', [finalTx]).catch(console.warn);
                 appendLog(
                   "Agente de Finanzas",
                   `Asiento contable integrado: ${finalTx.descripcion} (${finalTx.tipo}) por $${finalTx.monto.toLocaleString('es-CO')} COP.`,
@@ -629,7 +629,7 @@ export default function App() {
               }}
               onAddCliente={(newCli) => {
                 setClientes(prev => [newCli, ...prev]);
-                insforge.database.from('clientes').insert([newCli]).catch(console.warn);
+                apiInsert('clientes', [newCli]).catch(console.warn);
                 appendLog(
                   "Agente de Finanzas",
                   `Registro de base de datos de clientes completo: ${newCli.nombre} (NIT o CC: ${newCli.id}) asociado a obra/proyecto: ${newCli.contacto}`,
@@ -638,7 +638,7 @@ export default function App() {
               }}
               onAddCartera={(newRecord) => {
                 setCartera(prev => [newRecord, ...prev]);
-                insforge.database.from('cartera').insert([newRecord]).catch(console.warn);
+                apiInsert('cartera', [newRecord]).catch(console.warn);
                 appendLog(
                   "Agente de Finanzas",
                   `Nuevo registro en Cartera: Factura #${newRecord.factura} para el cliente ${newRecord.clienteNombre} por un total de $${newRecord.totalAPagar.toLocaleString('es-CO')} COP.`,
@@ -663,7 +663,7 @@ export default function App() {
               onPostAiAssistantQuery={handlePostAiAssistantQuery}
               onAddEmployee={(newEmp: Empleado) => {
                 setEmpleados(prev => [newEmp, ...prev]);
-                insforge.database.from('empleados').insert([{
+                apiInsert('empleados', [{
                   id: newEmp.id,
                   nombre: newEmp.nombre,
                   cargo: newEmp.cargo,
@@ -703,7 +703,7 @@ export default function App() {
                   id: `EGR-NOM-${Math.floor(Math.random() * 9000) + 1000}`
                 };
                 setTransacciones(prev => [finalTx, ...prev]);
-                insforge.database.from('transacciones').insert([finalTx]).catch(console.warn);
+                apiInsert('transacciones', [finalTx]).catch(console.warn);
                 appendLog(
                   "Agente de RR.HH.",
                   `Asiento automático registrado: ${finalTx.descripcion} por valor de ${new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', minimumFractionDigits: 0}).format(finalTx.monto)}.`,
@@ -724,7 +724,7 @@ export default function App() {
               currentUser={currentUser}
               onAddDocument={(newDoc) => {
                 setDocumentos(prev => [newDoc, ...prev]);
-                insforge.database.from('documentos').insert([{
+                apiInsert('documentos', [{
                   id: newDoc.id,
                   nombre: newDoc.nombre,
                   departamento: newDoc.departamento,
@@ -771,7 +771,7 @@ export default function App() {
                   id: `EGR-LOG-${Math.floor(Math.random() * 9000) + 1000}`
                 };
                 setTransacciones(prev => [finalTx, ...prev]);
-                insforge.database.from('transacciones').insert([finalTx]).catch(console.warn);
+                apiInsert('transacciones', [finalTx]).catch(console.warn);
                 appendLog(
                   "Agente de Finanzas",
                   `Flete logístico facturado: ${finalTx.descripcion} por valor de $${finalTx.monto.toLocaleString('es-CO')} COP.`,

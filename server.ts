@@ -588,6 +588,31 @@ async function startServer() {
   });
 
   // ─────────────────────────────────────────────────────────────
+  // GENERIC DB PROXY ENDPOINT
+  // ─────────────────────────────────────────────────────────────
+  
+  app.post("/api/db/:table", async (req, res) => {
+    try {
+      const role = getRole(req);
+      if (role === 'ANON') {
+        console.warn(`Alerta de seguridad: Inserción anónima en tabla ${req.params.table}`);
+      }
+      
+      const { table } = req.params;
+      const { data, error } = await insforge.database
+        .from(table)
+        .insert(req.body)
+        .select();
+
+      if (error) throw new Error(error.message);
+      res.json(data);
+    } catch (err: any) {
+      console.error(`Error en POST /api/db/${req.params.table}:`, err.message);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ─────────────────────────────────────────────────────────────
   // CARTERA API ENDPOINTS
   // ─────────────────────────────────────────────────────────────
 

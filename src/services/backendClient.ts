@@ -43,6 +43,30 @@ export enum OperationType {
   WRITE = 'write',
 }
 
+// ─────────────────────────────────────────────────────────────
+// FUNCIÓN UNIVERSAL DE INSERCIÓN VIA BACKEND (PROXY)
+// ─────────────────────────────────────────────────────────────
+export async function apiInsert(table: string, data: any) {
+  try {
+    const res = await fetch(`/api/db/${table}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": auth.currentUser?.rol || "ANON"
+      },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(errText);
+    }
+    return await res.json();
+  } catch (err) {
+    console.error(`[apiInsert] Error guardando en ${table}:`, err);
+    throw err;
+  }
+}
+
 // Referencia simbólica de base de datos (compatibilidad con la API previa).
 export const db = {
   firestoreDatabaseId: 'insforge-database'
