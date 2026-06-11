@@ -103,7 +103,7 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
             <TapaselLogo className="h-10 w-auto" isDarkTheme={true} />
           </div>
           <p className="font-mono text-[9px] text-brand-primary uppercase tracking-widest mt-1.5 pl-1.5 font-bold">
-            FLOW AI • ERP Modular
+            FLOW AI
           </p>
         </div>
         {onClose && (

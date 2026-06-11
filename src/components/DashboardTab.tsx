@@ -372,14 +372,7 @@ export default function DashboardTab({
       </section>
 
       {/* Footer system indicators */}
-      <footer className="pt-8 pb-4 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-mono text-slate-400">
-        <div className="flex items-center gap-3">
-          <span>Estado del Sistema:</span>
-          <span className="text-emerald-600 font-bold flex items-center gap-1.5 uppercase">
-            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-ping" />
-            TODOS LOS AGENTES EN LÍNEA
-          </span>
-        </div>
+      <footer className="pt-8 pb-4 border-t border-slate-200 flex flex-col md:flex-row justify-end items-center gap-4 text-xs font-mono text-slate-400">
         <div className="text-[10px] text-right uppercase tracking-widest opacity-60">
           Tapasel Flow AI • Medellín, Colombia © 2026
         </div>
