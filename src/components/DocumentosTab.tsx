@@ -19,6 +19,7 @@ import {
   Pencil
 } from 'lucide-react';
 import { Documento, Usuario } from '../types';
+import { insforge } from '../services/backendClient';
 
 interface DocumentosTabProps {
   documentos: Documento[];
@@ -60,29 +61,50 @@ export default function DocumentosTab({
   const [docDept, setDocDept] = useState<'Finanzas' | 'RRHH' | 'Operaciones' | 'Legal'>('Finanzas');
   const [docResp, setDocResp] = useState('');
   const [docExplicacion, setDocExplicacion] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
-  const handleAddDocumentSubmit = (e: React.FormEvent) => {
+  const handleAddDocumentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!docNombre || !docResp) return;
+
+    setIsUploading(true);
+    let documentUrl = '';
+    let storagePath = '';
+
+    if (selectedFile) {
+      const fileExt = selectedFile.name.split('.').pop();
+      storagePath = `doc_${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await insforge.storage.from('documentos').upload(storagePath, selectedFile);
+      if (uploadError) {
+        console.warn("Error uploading file:", uploadError);
+      } else {
+        documentUrl = insforge.storage.from('documentos').getPublicUrl(storagePath).data.publicUrl;
+      }
+    }
+
+    const finalName = selectedFile ? `${docNombre}.${selectedFile.name.split('.').pop()}` : docNombre;
 
     if (onAddDocument) {
       onAddDocument({
         id: `DOC-${Math.floor(Math.random() * 90000) + 10000}`,
-        nombre: docNombre,
+        nombre: finalName,
         departamento: docDept,
         version: "v1.0.0",
         fechaCreacion: new Date().toISOString().split('T')[0],
         fechaModificacion: new Date().toISOString().replace('T', ' ').substring(0, 16),
         responsable: docResp,
-        tamano: `${(Math.random() * 15 + 1).toFixed(1)} MB`,
+        tamano: selectedFile ? `${(selectedFile.size / 1024).toFixed(1)} KB` : `${(Math.random() * 15 + 1).toFixed(1)} MB`,
         estadoVerificacion: "Chequeo Neural",
         tipoDocumental: "Legal",
+        archivo_url: documentUrl,
+        storage_path: storagePath,
         historialVersiones: [
           {
             version: "v1.0.0",
             fecha: new Date().toISOString().replace('T', ' ').substring(0, 16),
             usuario: docResp,
-            comentario: docExplicacion || "Radicación inicial y escaneo OCR del archivo físico."
+            comentario: documentUrl ? `Documento físico subido: ${documentUrl}` : docExplicacion || "Radicación inicial y escaneo OCR del archivo físico."
           }
         ]
       });
@@ -90,8 +112,10 @@ export default function DocumentosTab({
       setDocNombre('');
       setDocExplicacion('');
       setDocResp('');
+      setSelectedFile(null);
       setShowDocForm(false);
-      alert(`¡Documento ${docNombre} radicado satisfactoriamente! Se ha encolado para escaneo neural OCR.`);
+      setIsUploading(false);
+      alert(`¡Documento ${finalName} radicado satisfactoriamente! Se ha encolado para escaneo neural OCR.`);
     }
   };
 
@@ -261,12 +285,29 @@ export default function DocumentosTab({
                 className="w-full bg-white border border-slate-300 rounded p-2 text-xs text-slate-800 focus:border-brand-primary outline-none"
               />
             </div>
+            <div className="space-y-1 md:col-span-2 lg:col-span-4">
+              <label className="block text-xs font-semibold text-slate-500">Subir Archivo Documento</label>
+              <div className="relative border-2 border-dashed border-slate-300 hover:border-brand-primary p-4 rounded text-center bg-white transition-colors">
+                <input 
+                  type="file" 
+                  accept=".pdf,.xlsx,.docx"
+                  onChange={(e) => setSelectedFile(e.target.files ? e.target.files[0] : null)}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                <FolderOpen className="w-5 h-5 text-brand-primary mx-auto mb-1" />
+                <span className="text-xs text-slate-600 font-semibold block">
+                  {selectedFile ? selectedFile.name : "Arrastre el archivo aquí o haga clic para seleccionar"}
+                </span>
+                <span className="text-[10px] text-slate-400 block mt-1 font-mono">Formatos: PDF, XLSX, DOCX</span>
+              </div>
+            </div>
             <div className="md:col-span-2 lg:col-span-4 flex justify-end pt-2">
               <button 
                 type="submit"
-                className="px-6 py-2 bg-brand-primary hover:opacity-90 text-white font-bold text-xs rounded transition-all uppercase tracking-wider border-none cursor-pointer"
+                disabled={isUploading}
+                className="px-6 py-2 bg-brand-primary hover:opacity-90 text-white font-bold text-xs rounded transition-all uppercase tracking-wider border-none cursor-pointer disabled:opacity-50"
               >
-                Cargar e Indexar en Repositorio General
+                {isUploading ? "Cargando archivo..." : "Cargar e Indexar en Repositorio General"}
               </button>
             </div>
           </form>
