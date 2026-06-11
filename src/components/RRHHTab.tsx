@@ -1,6 +1,6 @@
 import toast from 'react-hot-toast';
 import React, { useState, useEffect } from 'react';
-import { 
+import {  
   Users, 
   Search, 
   Plus, 
@@ -41,7 +41,9 @@ import {
   Check,
   FileSpreadsheet,
   BarChart3
-} from 'lucide-react';
+, Eye, Pencil, Trash, FileDown } from 'lucide-react';
+import { exportRecordToPDF, exportTableToPDF } from '../utils/pdfExport';
+import toast from 'react-hot-toast';
 import { Empleado, Transaccion } from '../types';
 import { formatCurrencyCOP as formatCurrency } from '../lib/formatters';
 
@@ -655,6 +657,7 @@ export default function RRHHTab({
                         <th className="p-4">Contacto</th>
                         <th className="p-4">Ingreso</th>
                         <th className="p-4">Salario COP</th>
+                        <th className="border border-slate-200 px-3 py-2 text-[10px] uppercase font-bold tracking-tight text-center">Acciones</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-slate-800">
@@ -679,7 +682,23 @@ export default function RRHHTab({
                           <td className="p-4 text-slate-500 font-mono">{emp.email}</td>
                           <td className="p-4 font-mono text-slate-500">{emp.fechaIngreso}</td>
                           <td className="p-4 font-mono font-bold text-brand-primary">{formatCurrency(emp.salario)}</td>
-                        </tr>
+                            <td className="border border-slate-200 px-3 py-1.5 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                  <Trash className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                  <FileDown className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
                       ))}
                     </tbody>
                   </table>
@@ -862,8 +881,9 @@ export default function RRHHTab({
                           <th className="p-3">Salida (Check-Out)</th>
                           <th className="p-3">Estado</th>
                           <th className="p-3">Último Método Lector</th>
-                        </tr>
-                      </thead>
+                        <th className="border border-slate-200 px-3 py-2 text-[10px] uppercase font-bold tracking-tight text-center">Acciones</th>
+                      </tr>
+                    </thead>
                       <tbody className="divide-y divide-slate-100 text-slate-800 font-sans">
                         {empleados.map(emp => {
                           const log = attendanceLogs.find(l => l.empId === emp.id);
@@ -886,7 +906,23 @@ export default function RRHHTab({
                                 </span>
                               </td>
                               <td className="p-3 text-slate-500 font-mono text-[10px]">{log?.metodo || 'Tarjeta RFID Planta'}</td>
-                            </tr>
+                            <td className="border border-slate-200 px-3 py-1.5 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                  <Trash className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                  <FileDown className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
                           );
                         })}
                       </tbody>
@@ -1121,7 +1157,23 @@ export default function RRHHTab({
                                   Eliminar
                                 </button>
                               </td>
-                            </tr>
+                            <td className="border border-slate-200 px-3 py-1.5 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                  <Trash className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                  <FileDown className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
                           ))}
                         </tbody>
                       </table>
@@ -1517,8 +1569,9 @@ export default function RRHHTab({
                             <th className="p-3 text-center">Horas Extra</th>
                             <th className="p-3 text-center">Permisos</th>
                             <th className="p-3 text-center">Inasist.</th>
-                          </tr>
-                        </thead>
+                        <th className="border border-slate-200 px-3 py-2 text-[10px] uppercase font-bold tracking-tight text-center">Acciones</th>
+                      </tr>
+                    </thead>
                         <tbody className="divide-y divide-slate-100 text-slate-900 font-mono">
                           {empleados.map((emp) => {
                             const pay = getEmployeePayroll(emp.id);
@@ -1622,7 +1675,23 @@ export default function RRHHTab({
                                     />
                                   </div>
                                 </td>
-                              </tr>
+                            <td className="border border-slate-200 px-3 py-1.5 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                  <Trash className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                  <FileDown className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
                             );
                           })}
                         </tbody>

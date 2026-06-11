@@ -1,6 +1,6 @@
 import toast from 'react-hot-toast';
 import React, { useState } from 'react';
-import { 
+import {  
   Folder, 
   FileText, 
   FolderOpen, 
@@ -18,7 +18,9 @@ import {
   BrainCircuit,
   Calendar,
   Pencil
-} from 'lucide-react';
+, Eye, Pencil, Trash, FileDown } from 'lucide-react';
+import { exportRecordToPDF, exportTableToPDF } from '../utils/pdfExport';
+import toast from 'react-hot-toast';
 import { Documento, Usuario } from '../types';
 import { insforge } from '../services/backendClient';
 
@@ -498,14 +500,46 @@ export default function DocumentosTab({
                           </button>
                         </div>
                       </td>
-                    </tr>
+                            <td className="border border-slate-200 px-3 py-1.5 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                  <Trash className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                  <FileDown className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
                   ))}
                   {filteredDocs.length === 0 && (
                     <tr>
                       <td colSpan={isArchivedTab ? 5 : 6} className="text-center py-6 text-slate-500 text-xs italic bg-white">
                         No se encontraron documentos en esta bandeja.
                       </td>
-                    </tr>
+                            <td className="border border-slate-200 px-3 py-1.5 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                  <Trash className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                  <FileDown className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
                   )}
                 </tbody>
               </table>

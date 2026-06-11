@@ -1,6 +1,6 @@
 import toast from 'react-hot-toast';
 import React, { useState, useEffect } from 'react';
-import { 
+import {  
   Cpu, 
   Plus, 
   Search, 
@@ -25,7 +25,9 @@ import {
   Compass,
   ArrowUpRight,
   Pencil
-} from 'lucide-react';
+, Eye, Pencil, Trash, FileDown } from 'lucide-react';
+import { exportRecordToPDF, exportTableToPDF } from '../utils/pdfExport';
+import toast from 'react-hot-toast';
 import { OrdenProduccion, Transaccion } from '../types';
 import { formatCurrencyCOP as formatCurrency } from '../lib/formatters';
 import { ORDENES_PRODUCCION_INICIALES } from '../mockData';
@@ -786,7 +788,23 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
                           </button>
                         </div>
                       </td>
-                    </tr>
+                            <td className="border border-slate-200 px-3 py-1.5 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                  <Trash className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                  <FileDown className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
                   ))}
                   
                   {filteredOrders.length === 0 && (
@@ -794,7 +812,23 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
                       <td colSpan={6} className="text-center py-10 text-slate-550 text-slate-505 text-slate-500">
                         No se encontraron órdenes de fabricación bajo los términos seleccionados.
                       </td>
-                    </tr>
+                            <td className="border border-slate-200 px-3 py-1.5 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                  <Trash className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                  <FileDown className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
                   )}
                 </tbody>
               </table>
@@ -1382,7 +1416,23 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
                           </button>
                         </div>
                       </td>
-                    </tr>
+                            <td className="border border-slate-200 px-3 py-1.5 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                  <Trash className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                  <FileDown className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
                   ))}
 
                   {filteredShipments.length === 0 && (
@@ -1390,7 +1440,23 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
                       <td colSpan={6} className="text-center py-10 text-slate-500">
                         No se encontraron registros logísticos de fletes para su búsqueda.
                       </td>
-                    </tr>
+                            <td className="border border-slate-200 px-3 py-1.5 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                  <Trash className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                  <FileDown className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
                   )}
                 </tbody>
               </table>

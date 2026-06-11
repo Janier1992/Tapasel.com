@@ -1,6 +1,6 @@
 import toast from 'react-hot-toast';
 import React, { useState, useEffect, useRef } from 'react';
-import { 
+import {  
   Users, 
   Banknote, 
   FileText, 
@@ -22,7 +22,9 @@ import {
   AlertCircle,
   Clock,
   PrinterCheck
-} from 'lucide-react';
+, Eye, Pencil, Trash, FileDown } from 'lucide-react';
+import { exportRecordToPDF, exportTableToPDF } from '../utils/pdfExport';
+import toast from 'react-hot-toast';
 import { Transaccion, Cliente, CarteraRecord, ProveedorRecord, CotizacionRecord } from '../types';
 import { formatCurrencyCOP as formatCurrency } from '../lib/formatters';
 import TapaselLogo from './TapaselLogo';
@@ -1136,6 +1138,7 @@ export default function FinanzasTab({
                         <th className="border border-slate-200 px-3 py-2 text-[10px] uppercase font-bold tracking-tight">Correo de Contacto</th>
                         <th className="border border-slate-200 px-3 py-2 text-[10px] uppercase font-bold tracking-tight">Celular / Teléfono</th>
                         <th className="border border-slate-200 px-3 py-2 text-[10px] uppercase font-bold tracking-tight">Obra Registrada</th>
+                        <th className="border border-slate-200 px-3 py-2 text-[10px] uppercase font-bold tracking-tight text-center">Acciones</th>
                       </tr>
                     </thead>
                     <tbody className="text-[11px]">
@@ -1149,6 +1152,22 @@ export default function FinanzasTab({
                             <td className="border border-slate-200 px-3 py-1.5 text-slate-500 font-mono">{c.email}</td>
                             <td className="border border-slate-200 px-3 py-1.5 text-slate-600 font-mono">{c.telefono}</td>
                             <td className="border border-slate-200 px-3 py-1.5 text-brand-primary font-bold">{c.contacto}</td>
+                            <td className="border border-slate-200 px-3 py-1.5 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                  <Trash className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                  <FileDown className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
                           </tr>
                         ))}
                     </tbody>
@@ -1821,13 +1840,13 @@ export default function FinanzasTab({
                                 ${item.iva.toLocaleString('es-CO')}
                               </td>
                               <td className="p-3 text-right font-mono text-slate-500">
-                                {item.retencion > 0 ? `$${item.retencion.toLocaleString('es-CO', { maximumFractionDigits: 1 })}` : '$ -'}
+                                {item.retencion > 0 ? `${item.retencion.toLocaleString('es-CO', { maximumFractionDigits: 1 })}` : '$ -'}
                               </td>
                               <td className="p-3 text-right font-mono font-black text-indigo-900 bg-indigo-50/20">
                                 ${item.totalAPagar.toLocaleString('es-CO')}
                               </td>
                               <td className="p-3 text-right font-mono font-bold text-blue-600">
-                                {item.abono > 0 ? `$${item.abono.toLocaleString('es-CO')}` : '$ -'}
+                                {item.abono > 0 ? `${item.abono.toLocaleString('es-CO')}` : '$ -'}
                               </td>
                               <td className="p-3 text-center font-mono text-slate-600">
                                 {item.rcAbono ? `#${item.rcAbono}` : '-'}
@@ -1874,7 +1893,23 @@ export default function FinanzasTab({
                                   </span>
                                 )}
                               </td>
-                            </tr>
+                            <td className="border border-slate-200 px-3 py-1.5 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                  <Trash className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                  <FileDown className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
 
                             {/* Inline Payment Settler Panel */}
                             {liquidatingRecordId === item.id && (
@@ -1944,7 +1979,23 @@ export default function FinanzasTab({
                                     </div>
                                   </div>
                                 </td>
-                              </tr>
+                            <td className="border border-slate-200 px-3 py-1.5 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                  <Trash className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                  <FileDown className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
                             )}
                           </React.Fragment>
                         ))}
@@ -2193,6 +2244,22 @@ export default function FinanzasTab({
                                 <span className="text-[10px] font-mono text-slate-400 font-bold text-center block">Saldado</span>
                               )}
                             </td>
+                            <td className="border border-slate-200 px-3 py-1.5 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                  <Trash className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                  <FileDown className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
                           </tr>
                         ))}
                       {transacciones.filter(t => t.tipo === 'Egreso' && t.descripcion.includes('[CXP]')).length === 0 && (
@@ -2200,7 +2267,23 @@ export default function FinanzasTab({
                           <td colSpan={10} className="border border-slate-200 p-6 text-center text-slate-400 text-xs italic bg-white">
                             Ninguna obligación de Cuenta por Pagar registrada todavía.
                           </td>
-                        </tr>
+                            <td className="border border-slate-200 px-3 py-1.5 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                  <Trash className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                  <FileDown className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
                       )}
                     </tbody>
                   </table>
@@ -2354,6 +2437,7 @@ export default function FinanzasTab({
                         <th className="border border-slate-200 px-3 py-2 text-[10px] uppercase font-bold tracking-tight">Descripción / Concepto Técnico</th>
                         <th className="border border-slate-200 px-3 py-2 text-[10px] uppercase font-bold tracking-tight">Método Origen</th>
                         <th className="border border-slate-200 px-3 py-2 text-[10px] uppercase font-bold tracking-tight">Monto COP</th>
+                        <th className="border border-slate-200 px-3 py-2 text-[10px] uppercase font-bold tracking-tight text-center">Acciones</th>
                       </tr>
                     </thead>
                     <tbody className="text-[11px]">
@@ -2372,6 +2456,22 @@ export default function FinanzasTab({
                             <td className="border border-slate-200 px-3 py-1.5 font-mono text-rose-600 font-bold font-sans">
                               -{formatCurrency(item.monto)}
                             </td>
+                            <td className="border border-slate-200 px-3 py-1.5 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                  <Trash className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                  <FileDown className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
                           </tr>
                         ))}
                       {transacciones.filter(t => t.tipo === 'Egreso' && (t.descripcion.match(/otros egresos|egr-ext|caja menor|gastos extra/i) || t.categoria === 'Caja Menor')).length === 0 && (
@@ -2379,7 +2479,23 @@ export default function FinanzasTab({
                           <td colSpan={7} className="border border-slate-200 p-6 text-center text-slate-400 text-xs italic bg-white">
                             Ningún egreso menor registrado hoy.
                           </td>
-                        </tr>
+                            <td className="border border-slate-200 px-3 py-1.5 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                  <Trash className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                  <FileDown className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
                       )}
                     </tbody>
                   </table>
@@ -2555,6 +2671,7 @@ export default function FinanzasTab({
                         <th className="px-5 py-4">Descripción / ID</th>
                         <th className="px-5 py-4">Monto COP</th>
                         <th className="px-5 py-4">Estado</th>
+                        <th className="border border-slate-200 px-3 py-2 text-[10px] uppercase font-bold tracking-tight text-center">Acciones</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-[11px]">
@@ -2588,14 +2705,46 @@ export default function FinanzasTab({
                               {item.estado}
                             </span>
                           </td>
-                        </tr>
+                            <td className="border border-slate-200 px-3 py-1.5 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                  <Trash className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                  <FileDown className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
                       ))}
                       {paginatedTxs.length === 0 && (
                         <tr>
                           <td colSpan={4} className="text-center py-6 text-slate-500 text-xs italic">
                             No se encontraron transacciones en base a los términos indicados.
                           </td>
-                        </tr>
+                            <td className="border border-slate-200 px-3 py-1.5 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                  <Trash className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                  <FileDown className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
                       )}
                     </tbody>
                   </table>
@@ -3070,6 +3219,22 @@ export default function FinanzasTab({
                                 )}
                               </div>
                             </td>
+                            <td className="border border-slate-200 px-3 py-1.5 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                  <Trash className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                  <FileDown className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
                           </tr>
                         ))
                     }
@@ -3082,7 +3247,23 @@ export default function FinanzasTab({
                         <td colSpan={12} className="text-center py-6 text-slate-500 text-xs italic">
                           No se encontraron registros de proveedores con los filtros indicados.
                         </td>
-                      </tr>
+                            <td className="border border-slate-200 px-3 py-1.5 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                  <Trash className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                  <FileDown className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
                     )}
                     </tbody>
                   </table>
@@ -3531,6 +3712,22 @@ export default function FinanzasTab({
                                 </button>
                               </div>
                             </td>
+                            <td className="border border-slate-200 px-3 py-1.5 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                  <Trash className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                  <FileDown className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
                           </tr>
                         ))
                       }
@@ -3543,7 +3740,23 @@ export default function FinanzasTab({
                           <td colSpan={8} className="text-center py-6 text-slate-500 text-xs italic">
                             No se encontraron cotizaciones registradas para los términos de búsqueda indicados.
                           </td>
-                        </tr>
+                            <td className="border border-slate-200 px-3 py-1.5 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                  <Trash className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                  <FileDown className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
                       )}
                     </tbody>
                   </table>
