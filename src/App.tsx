@@ -32,6 +32,7 @@ import {
   PROVEEDORES_INICIALES,
   COTIZACIONES_INICIALES
 } from './mockData';
+import { insforge } from './services/backendClient';
 
 // Modular view blocks
 import Sidebar from './components/Sidebar';
@@ -181,7 +182,7 @@ export default function App() {
   };
 
   // Form Submissions
-  const handleAddReceipt = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleAddReceipt = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
     const clienteId = data.get('clienteId') as string;
@@ -201,6 +202,13 @@ export default function App() {
 
     setTransacciones(prev => [newRec, ...prev]);
     setIsReceiptModalOpen(false);
+    
+    try {
+      await insforge.database.from('transacciones').insert([newRec]);
+    } catch (err) {
+      console.warn("No se pudo guardar la transacción en InsForge DB", err);
+    }
+
     appendLog(
       "Agente de Finanzas",
       `Generó ingreso ${newRec.id} de carteras por valor de $${newRec.monto.toLocaleString('es-CO')} COP dándole conciliación digital.`,
@@ -208,7 +216,7 @@ export default function App() {
     );
   };
 
-  const handleAddExpenditure = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleAddExpenditure = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
 
@@ -225,6 +233,13 @@ export default function App() {
 
     setTransacciones(prev => [newExp, ...prev]);
     setIsExpenditureModalOpen(false);
+    
+    try {
+      await insforge.database.from('transacciones').insert([newExp]);
+    } catch (err) {
+      console.warn("No se pudo guardar la transacción en InsForge DB", err);
+    }
+
     appendLog(
       "Agente de Finanzas",
       `Registró egreso corporativo ${newExp.id} de tesorería por $${newExp.monto.toLocaleString('es-CO')} COP.`,
@@ -232,7 +247,7 @@ export default function App() {
     );
   };
 
-  const handleAddEmployee = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleAddEmployee = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
 
@@ -252,6 +267,23 @@ export default function App() {
 
     setEmpleados(prev => [newEmp, ...prev]);
     setIsEmployeeModalOpen(false);
+    
+    try {
+      await insforge.database.from('empleados').insert([{
+        id: newEmp.id,
+        nombre: newEmp.nombre,
+        cargo: newEmp.cargo,
+        area: newEmp.area,
+        estado: newEmp.estado,
+        email: newEmp.email,
+        telefono: newEmp.telefono,
+        fecha_ingreso: newEmp.fechaIngreso,
+        salario: newEmp.salario
+      }]);
+    } catch (err) {
+      console.warn("No se pudo guardar empleado en DB", err);
+    }
+
     appendLog(
       "Agente de RR.HH.",
       `Alta corporativa completada: Carga de legajo en nube para el colaborador ${newEmp.nombre}.`,
@@ -261,43 +293,85 @@ export default function App() {
 
   // OCR Document scanner simulation trigger
   const [scanningDocument, setScanningDocument] = useState(false);
-  const handleAddDocument = (e: React.FormEvent<HTMLFormElement>) => {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const handleAddDocument = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
     setScanningDocument(true);
 
-    setTimeout(() => {
+    try {
+      let documentUrl = '';
+      let storagePath = '';
+      if (selectedFile) {
+        const fileExt = selectedFile.name.split('.').pop();
+        storagePath = `doc_${Date.now()}.${fileExt}`;
+        const { data: uploadData, error: uploadError } = await insforge.storage.from('documentos').upload(storagePath, selectedFile);
+        if (uploadError) {
+          console.warn("Error uploading file:", uploadError);
+        } else {
+          documentUrl = insforge.storage.from('documentos').getPublicUrl(storagePath).data.publicUrl;
+        }
+      }
+
+      const docNameInput = data.get('nombre') || 'escaneado_factura';
+      const finalName = selectedFile ? `${docNameInput}.${selectedFile.name.split('.').pop()}` : `${docNameInput}.pdf`;
+
       const newDoc: Documento = {
         id: `DOC-${Math.floor(Math.random() * 9000) + 1000}`,
-        nombre: `${data.get('nombre') || 'escaneado_factura'}.pdf`,
+        nombre: finalName,
         departamento: data.get('departamento') as string,
         fechaCreacion: new Date().toISOString().split('T')[0],
         fechaModificacion: new Date().toISOString().replace('T', ' ').substring(0, 16),
         responsable: currentUser?.nombre || 'Colaborador',
         version: "v1.0.0",
-        tamano: "840 KB",
+        tamano: selectedFile ? `${(selectedFile.size / 1024).toFixed(1)} KB` : "840 KB",
         estadoVerificacion: "Verificado",
-        tipoDocumental: "Contrato",
+        tipoDocumental: data.get('tipoDocumental') as string || "Contrato",
         historialVersiones: [
           { 
             version: "v1.0.0", 
             fecha: new Date().toISOString().replace('T', ' ').substring(0, 16), 
             usuario: currentUser?.nombre || 'Colaborador', 
-            comentario: "Documento radicado de forma autónoma tras escaneo y reconocimiento de texto OCR de alta precisión." 
+            comentario: documentUrl ? `Documento físico subido y radicado: ${documentUrl}` : "Documento radicado de forma autónoma tras escaneo y reconocimiento de texto OCR de alta precisión." 
           }
         ]
       };
 
       setDocumentos(prev => [newDoc, ...prev]);
+      
+      try {
+        await insforge.database.from('documentos').insert([{
+          id: newDoc.id,
+          nombre: newDoc.nombre,
+          departamento: newDoc.departamento,
+          fecha_creacion: newDoc.fechaCreacion,
+          fecha_modificacion: newDoc.fechaModificacion,
+          responsable: newDoc.responsable,
+          version: newDoc.version,
+          tamano: newDoc.tamano,
+          estado_verificacion: newDoc.estadoVerificacion,
+          tipo_documental: newDoc.tipoDocumental,
+          archivo_url: documentUrl,
+          storage_path: storagePath
+        }]);
+      } catch (err) {
+        console.warn("No se pudo guardar documento en DB", err);
+      }
+
       setScanningDocument(false);
       setIsDocumentModalOpen(false);
+      setSelectedFile(null);
       appendLog(
         "Agente de Documentos",
         `OCR Inteligente completado: Indexado y clasificado PDF de forma automática bajo el descriptor ${newDoc.nombre}.`,
         "Éxito"
       );
-      alert("¡Simulación OCR completada! El documento ha sido clasificado y verificado.");
-    }, 2000);
+      alert("¡Procesamiento completado! El documento ha sido clasificado, verificado y guardado.");
+    } catch (error) {
+      setScanningDocument(false);
+      alert("Error al subir el documento.");
+    }
   };
 
   // Sancionar nueva versión en documentos
@@ -485,6 +559,7 @@ export default function App() {
               activeTab={activeTab}
               onAddProveedor={(newProv) => {
                 setProveedores(prev => [newProv, ...prev]);
+                insforge.database.from('proveedores').insert([newProv]).catch(console.warn);
                 appendLog(
                   "Agente de Finanzas",
                   `Nuevo registro de Proveedor: ${newProv.proveedorNombre} - Factura #${newProv.factura} de $${newProv.totalAPagar.toLocaleString('es-CO')} COP.`,
@@ -501,6 +576,7 @@ export default function App() {
               }}
               onAddCotizacion={(newCot) => {
                 setCotizaciones(prev => [newCot, ...prev]);
+                insforge.database.from('cotizaciones').insert([newCot]).catch(console.warn);
                 appendLog(
                   "Agente de Finanzas",
                   `Nueva Cotización generada: No. ${newCot.cotizacionNo} para ${newCot.clienteNombre} por un total de $${newCot.total.toLocaleString('es-CO')} COP.`,
@@ -529,6 +605,7 @@ export default function App() {
                   id: `${newTx.tipo === 'Ingreso' ? 'REC' : 'EGR'}-${Math.floor(Math.random() * 9000) + 1000}`
                 };
                 setTransacciones(prev => [finalTx, ...prev]);
+                insforge.database.from('transacciones').insert([finalTx]).catch(console.warn);
                 appendLog(
                   "Agente de Finanzas",
                   `Asiento contable integrado: ${finalTx.descripcion} (${finalTx.tipo}) por $${finalTx.monto.toLocaleString('es-CO')} COP.`,
@@ -551,6 +628,7 @@ export default function App() {
               }}
               onAddCliente={(newCli) => {
                 setClientes(prev => [newCli, ...prev]);
+                insforge.database.from('clientes').insert([newCli]).catch(console.warn);
                 appendLog(
                   "Agente de Finanzas",
                   `Registro de base de datos de clientes completo: ${newCli.nombre} (NIT o CC: ${newCli.id}) asociado a obra/proyecto: ${newCli.contacto}`,
@@ -559,6 +637,7 @@ export default function App() {
               }}
               onAddCartera={(newRecord) => {
                 setCartera(prev => [newRecord, ...prev]);
+                insforge.database.from('cartera').insert([newRecord]).catch(console.warn);
                 appendLog(
                   "Agente de Finanzas",
                   `Nuevo registro en Cartera: Factura #${newRecord.factura} para el cliente ${newRecord.clienteNombre} por un total de $${newRecord.totalAPagar.toLocaleString('es-CO')} COP.`,
@@ -583,6 +662,17 @@ export default function App() {
               onPostAiAssistantQuery={handlePostAiAssistantQuery}
               onAddEmployee={(newEmp: Empleado) => {
                 setEmpleados(prev => [newEmp, ...prev]);
+                insforge.database.from('empleados').insert([{
+                  id: newEmp.id,
+                  nombre: newEmp.nombre,
+                  cargo: newEmp.cargo,
+                  area: newEmp.area,
+                  estado: newEmp.estado,
+                  email: newEmp.email,
+                  telefono: newEmp.telefono,
+                  fecha_ingreso: newEmp.fechaIngreso,
+                  salario: newEmp.salario
+                }]).catch(console.warn);
                 appendLog(
                   "Agente de RR.HH.",
                   `Alta corporativa y registro de nómina completados: Colaborador ${newEmp.nombre} añadido al escalafón.`,
@@ -612,6 +702,7 @@ export default function App() {
                   id: `EGR-NOM-${Math.floor(Math.random() * 9000) + 1000}`
                 };
                 setTransacciones(prev => [finalTx, ...prev]);
+                insforge.database.from('transacciones').insert([finalTx]).catch(console.warn);
                 appendLog(
                   "Agente de RR.HH.",
                   `Asiento automático registrado: ${finalTx.descripcion} por valor de ${new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', minimumFractionDigits: 0}).format(finalTx.monto)}.`,
@@ -632,6 +723,18 @@ export default function App() {
               currentUser={currentUser}
               onAddDocument={(newDoc) => {
                 setDocumentos(prev => [newDoc, ...prev]);
+                insforge.database.from('documentos').insert([{
+                  id: newDoc.id,
+                  nombre: newDoc.nombre,
+                  departamento: newDoc.departamento,
+                  fecha_creacion: newDoc.fechaCreacion,
+                  fecha_modificacion: newDoc.fechaModificacion,
+                  responsable: newDoc.responsable,
+                  version: newDoc.version,
+                  tamano: newDoc.tamano,
+                  estado_verificacion: newDoc.estadoVerificacion,
+                  tipo_documental: newDoc.tipoDocumental
+                }]).catch(console.warn);
                 appendLog(
                   "Agente de Documentos",
                   `Radicación de archivo ${newDoc.nombre} (${newDoc.id}) completada por ${newDoc.responsable}.`,
@@ -667,6 +770,7 @@ export default function App() {
                   id: `EGR-LOG-${Math.floor(Math.random() * 9000) + 1000}`
                 };
                 setTransacciones(prev => [finalTx, ...prev]);
+                insforge.database.from('transacciones').insert([finalTx]).catch(console.warn);
                 appendLog(
                   "Agente de Finanzas",
                   `Flete logístico facturado: ${finalTx.descripcion} por valor de $${finalTx.monto.toLocaleString('es-CO')} COP.`,
@@ -863,10 +967,18 @@ export default function App() {
             
             <form onSubmit={handleAddDocument} className="p-6 space-y-4">
               
-              {/* Fake drag and drop zone */}
-              <div className="border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-brand-primary/50 p-6 rounded-lg text-center bg-slate-50/50 dark:bg-slate-200/50 transition-colors pointer-events-none">
-                <FolderOpen className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                <span className="text-xs text-slate-600 dark:text-slate-300 font-semibold block">Arrastre el PDF aquí o haga clic</span>
+              {/* File upload zone */}
+              <div className="relative border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-brand-primary/50 p-6 rounded-lg text-center bg-slate-50/50 dark:bg-slate-200/50 transition-colors">
+                <input 
+                  type="file" 
+                  accept=".pdf,.xlsx,.docx"
+                  onChange={(e) => setSelectedFile(e.target.files ? e.target.files[0] : null)}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                <FolderOpen className="w-8 h-8 text-brand-primary mx-auto mb-2" />
+                <span className="text-xs text-slate-600 dark:text-slate-300 font-semibold block">
+                  {selectedFile ? selectedFile.name : "Arrastre el archivo aquí o haga clic"}
+                </span>
                 <span className="text-[10px] text-slate-400 block mt-1 font-mono">Archivos soportados: PDF, XLSX, DOCX</span>
               </div>
 

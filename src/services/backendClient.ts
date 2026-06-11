@@ -26,7 +26,7 @@ const INSFORGE_BASE_URL =
   'https://yk386jub.us-east.insforge.app';
 
 // Cliente de navegador de InsForge: maneja sesión y token automáticamente.
-const insforge = createClient({ baseUrl: INSFORGE_BASE_URL });
+export const insforge = createClient({ baseUrl: INSFORGE_BASE_URL });
 
 // Clave de almacenamiento local del usuario activo.
 const USER_STORAGE_KEY = 'tapasel_flow_user';

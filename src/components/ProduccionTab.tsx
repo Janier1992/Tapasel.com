@@ -28,6 +28,7 @@ import {
 import { OrdenProduccion, Transaccion } from '../types';
 import { formatCurrencyCOP as formatCurrency } from '../lib/formatters';
 import { ORDENES_PRODUCCION_INICIALES } from '../mockData';
+import { insforge } from '../services/backendClient';
 
 interface EnvioLogistico {
   id: string;
@@ -172,6 +173,9 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
     };
     setInventory(prev => [...prev, newItem]);
     setIsInvFormOpen(false);
+    
+    insforge.database.from('inventario_produccion').insert([newItem]).catch(console.warn);
+
     setNewInvNombre('');
     setNewInvCantidad(100);
     setNewInvUnidad('unidades');
@@ -301,6 +305,8 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
     setSelectedOrderId(newOrder.id);
     setIsFormOpen(false);
 
+    insforge.database.from('ordenes_produccion').insert([newOrder]).catch(console.warn);
+
     // reset fields
     setNewProducto('');
     setNewCantidad(100);
@@ -358,6 +364,8 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
 
     // 1. Add Shipment to Log
     setShipments(prev => [newShip, ...prev]);
+    
+    insforge.database.from('envios_logistica').insert([newShip]).catch(console.warn);
 
     // 1.5 Register corresponding Logistics Egreso in Finance ledger
     if (onAddTransaction) {
