@@ -705,23 +705,7 @@ export default function RRHHTab({
                           <td className="p-4 text-slate-500 font-mono">{emp.email}</td>
                           <td className="p-4 font-mono text-slate-500">{emp.fechaIngreso}</td>
                           <td className="p-4 font-mono font-bold text-brand-primary">{formatCurrency(emp.salario)}</td>
-                            <td className="border border-slate-200 px-3 py-1.5 text-center">
-                              <div className="flex items-center justify-center gap-1.5">
-                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericViewRecord(emp); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
-                                  <Eye className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericEditConfig({ record: emp, table: 'filteredStaff' }); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
-                                  <Pencil className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); handleGenericDelete(emp?.id, 'filteredStaff', typeof setFilteredStaff !== 'undefined' ? setFilteredStaff : null, typeof filteredStaff !== 'undefined' ? filteredStaff : null); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
-                                  <Trash className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); exportRecordToPDF(emp, 'Registro_filteredStaff'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
-                                  <FileDown className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
+                            </tr>
                       ))}
                     </tbody>
                   </table>
@@ -929,23 +913,7 @@ export default function RRHHTab({
                                 </span>
                               </td>
                               <td className="p-3 text-slate-500 font-mono text-[10px]">{log?.metodo || 'Tarjeta RFID Planta'}</td>
-                            <td className="border border-slate-200 px-3 py-1.5 text-center">
-                              <div className="flex items-center justify-center gap-1.5">
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
-                                  <Eye className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
-                                  <Pencil className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
-                                  <Trash className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
-                                  <FileDown className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
+                            </tr>
                           );
                         })}
                       </tbody>
@@ -1180,23 +1148,7 @@ export default function RRHHTab({
                                   Eliminar
                                 </button>
                               </td>
-                            <td className="border border-slate-200 px-3 py-1.5 text-center">
-                              <div className="flex items-center justify-center gap-1.5">
-                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericViewRecord(nov); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
-                                  <Eye className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericEditConfig({ record: nov, table: 'novedades' }); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
-                                  <Pencil className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); handleGenericDelete(nov?.id, 'novedades', typeof setNovedades !== 'undefined' ? setNovedades : null, typeof novedades !== 'undefined' ? novedades : null); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
-                                  <Trash className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); exportRecordToPDF(nov, 'Registro_novedades'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
-                                  <FileDown className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
+                            </tr>
                           ))}
                         </tbody>
                       </table>
@@ -1698,23 +1650,7 @@ export default function RRHHTab({
                                     />
                                   </div>
                                 </td>
-                            <td className="border border-slate-200 px-3 py-1.5 text-center">
-                              <div className="flex items-center justify-center gap-1.5">
-                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericViewRecord(emp); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
-                                  <Eye className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericEditConfig({ record: emp, table: 'empleados' }); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
-                                  <Pencil className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); handleGenericDelete(emp?.id, 'empleados', typeof setEmpleados !== 'undefined' ? setEmpleados : null, typeof empleados !== 'undefined' ? empleados : null); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
-                                  <Trash className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); exportRecordToPDF(emp, 'Registro_empleados'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
-                                  <FileDown className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
+                            </tr>
                             );
                           })}
                         </tbody>

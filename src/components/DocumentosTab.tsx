@@ -523,46 +523,14 @@ export default function DocumentosTab({
                           </button>
                         </div>
                       </td>
-                            <td className="border border-slate-200 px-3 py-1.5 text-center">
-                              <div className="flex items-center justify-center gap-1.5">
-                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericViewRecord(doc); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
-                                  <Eye className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericEditConfig({ record: doc, table: 'filteredDocs' }); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
-                                  <Pencil className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); handleGenericDelete(doc?.id, 'filteredDocs', typeof setFilteredDocs !== 'undefined' ? setFilteredDocs : null, typeof filteredDocs !== 'undefined' ? filteredDocs : null); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
-                                  <Trash className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); exportRecordToPDF(doc, 'Registro_filteredDocs'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
-                                  <FileDown className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
+                            </tr>
                   ))}
                   {filteredDocs.length === 0 && (
                     <tr>
                       <td colSpan={isArchivedTab ? 5 : 6} className="text-center py-6 text-slate-500 text-xs italic bg-white">
                         No se encontraron documentos en esta bandeja.
                       </td>
-                            <td className="border border-slate-200 px-3 py-1.5 text-center">
-                              <div className="flex items-center justify-center gap-1.5">
-                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericViewRecord(doc); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
-                                  <Eye className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericEditConfig({ record: doc, table: 'filteredDocs' }); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
-                                  <Pencil className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); handleGenericDelete(doc?.id, 'filteredDocs', typeof setFilteredDocs !== 'undefined' ? setFilteredDocs : null, typeof filteredDocs !== 'undefined' ? filteredDocs : null); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
-                                  <Trash className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); exportRecordToPDF(doc, 'Registro_filteredDocs'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
-                                  <FileDown className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
+                            </tr>
                   )}
                 </tbody>
               </table>

@@ -811,23 +811,7 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
                           </button>
                         </div>
                       </td>
-                            <td className="border border-slate-200 px-3 py-1.5 text-center">
-                              <div className="flex items-center justify-center gap-1.5">
-                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericViewRecord(order); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
-                                  <Eye className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericEditConfig({ record: order, table: 'filteredOrders' }); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
-                                  <Pencil className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); handleGenericDelete(order?.id, 'filteredOrders', typeof setFilteredOrders !== 'undefined' ? setFilteredOrders : null, typeof filteredOrders !== 'undefined' ? filteredOrders : null); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
-                                  <Trash className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); exportRecordToPDF(order, 'Registro_filteredOrders'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
-                                  <FileDown className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
+                            </tr>
                   ))}
                   
                   {filteredOrders.length === 0 && (
@@ -835,23 +819,7 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
                       <td colSpan={6} className="text-center py-10 text-slate-550 text-slate-505 text-slate-500">
                         No se encontraron órdenes de fabricación bajo los términos seleccionados.
                       </td>
-                            <td className="border border-slate-200 px-3 py-1.5 text-center">
-                              <div className="flex items-center justify-center gap-1.5">
-                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericViewRecord(order); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
-                                  <Eye className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericEditConfig({ record: order, table: 'filteredOrders' }); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
-                                  <Pencil className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); handleGenericDelete(order?.id, 'filteredOrders', typeof setFilteredOrders !== 'undefined' ? setFilteredOrders : null, typeof filteredOrders !== 'undefined' ? filteredOrders : null); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
-                                  <Trash className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); exportRecordToPDF(order, 'Registro_filteredOrders'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
-                                  <FileDown className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
+                            </tr>
                   )}
                 </tbody>
               </table>
@@ -1439,23 +1407,7 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
                           </button>
                         </div>
                       </td>
-                            <td className="border border-slate-200 px-3 py-1.5 text-center">
-                              <div className="flex items-center justify-center gap-1.5">
-                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericViewRecord(ship); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
-                                  <Eye className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericEditConfig({ record: ship, table: 'filteredShipments' }); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
-                                  <Pencil className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); handleGenericDelete(ship?.id, 'filteredShipments', typeof setFilteredShipments !== 'undefined' ? setFilteredShipments : null, typeof filteredShipments !== 'undefined' ? filteredShipments : null); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
-                                  <Trash className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); exportRecordToPDF(ship, 'Registro_filteredShipments'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
-                                  <FileDown className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
+                            </tr>
                   ))}
 
                   {filteredShipments.length === 0 && (
@@ -1463,23 +1415,7 @@ export default function ProduccionTab({ onPostAiAssistantQuery, activeTab, onAdd
                       <td colSpan={6} className="text-center py-10 text-slate-500">
                         No se encontraron registros logísticos de fletes para su búsqueda.
                       </td>
-                            <td className="border border-slate-200 px-3 py-1.5 text-center">
-                              <div className="flex items-center justify-center gap-1.5">
-                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericViewRecord(ship); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
-                                  <Eye className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericEditConfig({ record: ship, table: 'filteredShipments' }); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
-                                  <Pencil className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); handleGenericDelete(ship?.id, 'filteredShipments', typeof setFilteredShipments !== 'undefined' ? setFilteredShipments : null, typeof filteredShipments !== 'undefined' ? filteredShipments : null); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
-                                  <Trash className="w-3.5 h-3.5" />
-                                </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); exportRecordToPDF(ship, 'Registro_filteredShipments'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
-                                  <FileDown className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
+                            </tr>
                   )}
                 </tbody>
               </table>
