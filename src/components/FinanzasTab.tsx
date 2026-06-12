@@ -1,6 +1,6 @@
 import toast from 'react-hot-toast';
 import React, { useState, useEffect, useRef } from 'react';
-import {  
+import {   
   Users, 
   Banknote, 
   FileText, 
@@ -22,7 +22,11 @@ import {
   AlertCircle,
   Clock,
   PrinterCheck
-, Eye, Pencil, Trash, FileDown } from 'lucide-react';
+, Eye, Pencil, Trash, FileDown , Eye, Pencil, Trash, FileDown } from 'lucide-react';
+import { GenericViewModal, GenericEditModal } from './GenericModals';
+import { exportRecordToPDF, exportTableToPDF } from '../utils/pdfExport';
+import { apiDelete } from '../services/backendClient';
+
 import { exportRecordToPDF, exportTableToPDF } from '../utils/pdfExport';
 import toast from 'react-hot-toast';
 import { Transaccion, Cliente, CarteraRecord, ProveedorRecord, CotizacionRecord } from '../types';
@@ -259,7 +263,19 @@ function SignaturePad({ onSave, onCancel, title }: SignaturePadProps) {
         >
           Guardar Firma
         </button>
-      </div>
+            <GenericViewModal record={genericViewRecord} onClose={() => setGenericViewRecord(null)} />
+      {genericEditConfig && (
+        <GenericEditModal
+          record={genericEditConfig.record}
+          tableName={genericEditConfig.table}
+          onClose={() => setGenericEditConfig(null)}
+          onSaved={(updated) => {
+            setGenericEditConfig(null);
+            window.location.reload();
+          }}
+        />
+      )}
+</div>
     </div>
   );
 }
@@ -287,6 +303,25 @@ export default function FinanzasTab({
 }: FinanzasTabProps) {
   
   // High-performance State defining which financial subprocess is selected (Image 1)
+  const [genericViewRecord, setGenericViewRecord] = useState<any>(null);
+  const [genericEditConfig, setGenericEditConfig] = useState<{record: any, table: string} | null>(null);
+
+  const handleGenericDelete = async (id: string, table: string, stateSetter: Function | null, currentState: any[] | null) => {
+    if(confirm('¿Estás seguro de eliminar este registro?')) {
+      try {
+        await apiDelete(table, id);
+        if (currentState && stateSetter) {
+          stateSetter(currentState.filter((item: any) => item.id !== id));
+        } else {
+          window.location.reload();
+        }
+        toast.success('Registro eliminado');
+      } catch (err: any) {
+        toast.error('Error al eliminar: ' + err.message);
+      }
+    }
+  };
+
   const [activeProcessTab, setActiveProcessTab] = useState<'clientes' | 'recibos' | 'cuentas_por_pagar' | 'otros_egresos' | 'cartera' | 'reportes' | 'proveedores' | 'cotizaciones'>('recibos');
 
   // Collapsible forms visibility states
@@ -2707,16 +2742,16 @@ export default function FinanzasTab({
                           </td>
                             <td className="border border-slate-200 px-3 py-1.5 text-center">
                               <div className="flex items-center justify-center gap-1.5">
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericViewRecord(item); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
                                   <Eye className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericEditConfig({ record: item, table: 'paginatedTxs' }); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
                                   <Pencil className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); handleGenericDelete(item?.id, 'paginatedTxs', typeof setPaginatedTxs !== 'undefined' ? setPaginatedTxs : null, typeof paginatedTxs !== 'undefined' ? paginatedTxs : null); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
                                   <Trash className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                <button type="button" onClick={(e) => { e.preventDefault(); exportRecordToPDF(item, 'Registro_paginatedTxs'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
                                   <FileDown className="w-3.5 h-3.5" />
                                 </button>
                               </div>
@@ -2730,16 +2765,16 @@ export default function FinanzasTab({
                           </td>
                             <td className="border border-slate-200 px-3 py-1.5 text-center">
                               <div className="flex items-center justify-center gap-1.5">
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Vista detallada cargada'); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericViewRecord(item); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver">
                                   <Eye className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Modo edición activado'); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); setGenericEditConfig({ record: item, table: 'paginatedTxs' }); }} className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Editar">
                                   <Pencil className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Registro eliminado'); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                <button type="button" onClick={(e) => { e.preventDefault(); handleGenericDelete(item?.id, 'paginatedTxs', typeof setPaginatedTxs !== 'undefined' ? setPaginatedTxs : null, typeof paginatedTxs !== 'undefined' ? paginatedTxs : null); }} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar">
                                   <Trash className="w-3.5 h-3.5" />
                                 </button>
-                                <button type="button" onClick={(e) => { e.preventDefault(); toast.success('Exportando a PDF...'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
+                                <button type="button" onClick={(e) => { e.preventDefault(); exportRecordToPDF(item, 'Registro_paginatedTxs'); }} className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors" title="Exportar a PDF">
                                   <FileDown className="w-3.5 h-3.5" />
                                 </button>
                               </div>

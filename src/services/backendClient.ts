@@ -408,3 +408,41 @@ export async function signInWithPopup(_authInstance: any, _provider: any) {
 export async function signInWithRedirect(_authInstance: any, _provider: any) {
   console.log('OAuth redirect no configurado en este despliegue.');
 }
+
+export const apiUpdate = async (table: string, id: string | number, data: any) => {
+  try {
+    const res = await fetch(`/api/db/${table}/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Unknown error updating data');
+    }
+    
+    return await res.json();
+  } catch (err) {
+    console.error('apiUpdate error:', err);
+    throw err;
+  }
+};
+
+export const apiDelete = async (table: string, id: string | number) => {
+  try {
+    const res = await fetch(`/api/db/${table}/${id}`, {
+      method: 'DELETE'
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Unknown error deleting data');
+    }
+    
+    return await res.json();
+  } catch (err) {
+    console.error('apiDelete error:', err);
+    throw err;
+  }
+};
