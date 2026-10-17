@@ -92,7 +92,7 @@ export interface Usuario {
   nombre: string;
   email: string;
   cargo: string;
-  rol: 'ADMIN' | 'CFO' | 'RRHH' | 'COO';
+  rol: 'ADMIN' | 'CFO' | 'RRHH' | 'COO' | 'PENDIENTE';
   avatarInitials: string;
   permisos: string[];
 }

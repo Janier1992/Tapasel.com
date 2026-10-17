@@ -1,4 +1,11 @@
 import { GoogleGenAI } from "@google/genai";
+import { createAdminClient } from "@insforge/sdk";
+import { authenticate, createRateLimiter, getBearerToken } from "../server/auth";
+
+const INSFORGE_PROJECT_URL = process.env.INSFORGE_PROJECT_URL || "https://yk386jub.us-east.insforge.app";
+const MAX_PROMPT_CHARS = 4000;
+const MAX_STATE_CHARS = 200_000;
+const rateLimit = createRateLimiter(20, 60_000);
 
 // Fallback logic for offline / no-key simulation
 function responderAnalisisSimulado(prompt: string, state: any): string {
@@ -82,29 +89,36 @@ Por favor, realiza una pregunta específica sobre retrasos, cobros o indicadores
 }
 
 export default async function handler(req: any, res: any) {
-  // Configuración de CORS
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-  );
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
+  // Sin cabeceras CORS: el frontend llama a este endpoint desde su mismo origen.
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: "Método no permitido. Utilice POST." });
   }
 
   try {
-    const { prompt, databaseState } = req.body;
+    const insforgeKey = process.env.INSFORGE_API_KEY;
+    if (!insforgeKey) {
+      console.error("Falta INSFORGE_API_KEY: no se puede verificar la sesión.");
+      return res.status(500).json({ error: "Servicio no configurado." });
+    }
+    const token = getBearerToken(req.headers?.authorization);
+    const user = token
+      ? await authenticate(token, INSFORGE_PROJECT_URL, createAdminClient({ baseUrl: INSFORGE_PROJECT_URL, apiKey: insforgeKey }))
+      : null;
+    if (!user) {
+      return res.status(401).json({ error: "Sesión requerida." });
+    }
+
+    const { prompt, databaseState } = req.body || {};
     
-    if (!prompt) {
+    if (!prompt || typeof prompt !== 'string') {
       return res.status(400).json({ error: "Falta el mensaje (prompt) en la solicitud." });
+    }
+    if (prompt.length > MAX_PROMPT_CHARS || JSON.stringify(databaseState ?? null).length > MAX_STATE_CHARS) {
+      return res.status(413).json({ error: "La consulta es demasiado grande." });
+    }
+    if (!rateLimit(user.id)) {
+      return res.status(429).json({ error: "Demasiadas consultas. Intente de nuevo en un minuto." });
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
@@ -171,8 +185,7 @@ Al responder:
   } catch (error: any) {
     console.error("Error en endpoint /api/assistant:", error);
     return res.status(500).json({ 
-      error: "Ocurrió un error en el procesamiento de la inteligencia artificial.",
-      details: error.message 
+      error: "Ocurrió un error en el procesamiento de la inteligencia artificial."
     });
   }
 }

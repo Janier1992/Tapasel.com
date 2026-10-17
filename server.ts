@@ -4,6 +4,7 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
+import { authenticate, createRateLimiter, getBearerToken, type AppRole, type AuthedUser } from "./server/auth";
 
 dotenv.config({ path: ".env.local" });
 dotenv.config();
@@ -43,7 +44,54 @@ Object.defineProperty(insforge, "database", {
   }
 });
 
-const getRole = (req: express.Request) => req.headers['x-user-role'] as string || 'ANON';
+// El rol sale del usuario autenticado por el middleware (token verificado + tabla
+// `usuarios`); nunca de una cabecera enviada por el cliente.
+const getAuthUser = (req: express.Request): AuthedUser | undefined => (req as any).authUser;
+const getRole = (req: express.Request): string => getAuthUser(req)?.rol || 'ANON';
+
+// Roles autorizados a escribir (insertar/editar) por tabla en el proxy genérico.
+const TABLE_WRITE_ROLES: Record<string, AppRole[]> = {
+  clientes: ['ADMIN', 'CFO'],
+  transacciones: ['ADMIN', 'CFO'],
+  cartera: ['ADMIN', 'CFO'],
+  proveedores: ['ADMIN', 'CFO'],
+  cotizaciones: ['ADMIN', 'CFO'],
+  cotizaciones_items: ['ADMIN', 'CFO'],
+  empleados: ['ADMIN', 'RRHH'],
+  documentos: ['ADMIN', 'RRHH'],
+  documento_versiones: ['ADMIN', 'RRHH'],
+  ordenes_produccion: ['ADMIN', 'COO'],
+  inventario_produccion: ['ADMIN', 'COO'],
+  envios_logistica: ['ADMIN', 'COO'],
+  audit_logs: ['ADMIN', 'CFO', 'RRHH', 'COO'],
+};
+// Borrado: más restrictivo que la escritura. Sin entrada = solo ADMIN.
+// Los registros de auditoría no se editan ni se borran desde la API.
+const TABLE_DELETE_ROLES: Record<string, AppRole[]> = {
+  clientes: ['ADMIN', 'CFO'],
+  transacciones: ['ADMIN', 'CFO'],
+  cartera: ['ADMIN', 'CFO'],
+  proveedores: ['ADMIN', 'CFO'],
+  empleados: ['ADMIN', 'RRHH'],
+  ordenes_produccion: ['ADMIN', 'COO'],
+  inventario_produccion: ['ADMIN', 'COO'],
+  envios_logistica: ['ADMIN', 'COO'],
+};
+
+type TableOp = 'insert' | 'update' | 'delete';
+function tablePermission(table: string, role: string, op: TableOp): 'ok' | 'unknown' | 'forbidden' {
+  if (!Object.prototype.hasOwnProperty.call(TABLE_WRITE_ROLES, table)) return 'unknown';
+  if (table === 'audit_logs' && op !== 'insert') return 'forbidden';
+  const allowed = op === 'delete'
+    ? (TABLE_DELETE_ROLES[table] || ['ADMIN'])
+    : TABLE_WRITE_ROLES[table];
+  return (allowed as string[]).includes(role) ? 'ok' : 'forbidden';
+}
+
+// Asistente de IA: límites para evitar abuso de la cuota de Gemini.
+const MAX_PROMPT_CHARS = 4000;
+const MAX_STATE_CHARS = 200_000;
+const assistantRateLimit = createRateLimiter(20, 60_000);
 
 function translateAuthError(message: string): string {
   if (!message) return "Ha ocurrido un error inesperado.";
@@ -77,328 +125,39 @@ async function startServer() {
   const PORT = 3000;
 
   // Enable JSON request body parsing
-  app.use(express.json());
+  app.disable("x-powered-by");
+  app.use((_req, res, next) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "DENY");
+    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    next();
+  });
+  app.use(express.json({ limit: "1mb" }));
+
+  // Toda la API exige sesión válida de InsForge y un perfil con rol en `usuarios`.
+  app.use("/api", async (req, res, next) => {
+    try {
+      const token = getBearerToken(req.headers.authorization);
+      if (!token) return res.status(401).json({ error: "Sesión requerida." });
+      const user = await authenticate(token, INSFORGE_PROJECT_URL, insforge);
+      if (!user) return res.status(401).json({ error: "Sesión inválida o cuenta pendiente de aprobación." });
+      (req as any).authUser = user;
+      next();
+    } catch (err: any) {
+      console.error("Error verificando sesión:", err?.message);
+      res.status(401).json({ error: "No se pudo verificar la sesión." });
+    }
+  });
 
   console.log("[TAPASEL DB] Conectado exitosamente a InsForge API Gateway.");
 
-  // ─────────────────────────────────────────────────────────────
-  // AUTH API ENDPOINTS
-  // ─────────────────────────────────────────────────────────────
-
-  app.post("/api/auth/register", async (req, res) => {
-    const { nombre, email, cargo, rol, avatarInitials, permisos, password } = req.body;
-    try {
-      let redirectUrl = "http://localhost:3000";
-      if (process.env.APP_URL && process.env.APP_URL.startsWith("http")) {
-        redirectUrl = process.env.APP_URL;
-      }
-
-      // 1. Sign up user in InsForge Authentication Service
-      const { data: signUpData, error: signUpError } = await insforge.auth.signUp({
-        email: email.toLowerCase(),
-        password,
-        name: nombre,
-        redirectTo: redirectUrl
-      });
-
-      if (signUpError) {
-        console.error("InsForge signUp error:", signUpError);
-        return res.status(400).json({ error: translateAuthError(signUpError.message) });
-      }
-
-      // Check if email verification is required
-      const requireEmailVerification = !!signUpData?.requireEmailVerification;
-
-      let userId = signUpData?.user?.id;
-      if (!userId) {
-        if (requireEmailVerification) {
-          // Use email as temporary ID if the user is in pending verification state and has no UUID yet
-          userId = email.toLowerCase();
-        } else {
-          return res.status(500).json({ error: "No se pudo recuperar el ID del usuario creado." });
-        }
-      }
-
-      // 2. Check if the profile already exists in our usuarios table
-      const { data: exists, error: existsErr } = await insforge.database
-        .from("usuarios")
-        .select("*")
-        .eq("email", email.toLowerCase())
-        .maybeSingle();
-
-      if (existsErr) {
-        console.error("Error checking user profile:", existsErr.message);
-      }
-
-      let row;
-      if (exists) {
-        row = exists;
-      } else {
-        // Save the profile in our usuarios database table using the InsForge user ID (or temporary email ID)
-        const { data: insertData, error: insertErr } = await insforge.database
-          .from("usuarios")
-          .insert({
-            id: userId,
-            nombre,
-            email: email.toLowerCase(),
-            cargo,
-            rol,
-            avatar_initials: avatarInitials || "",
-            permisos: permisos || []
-          })
-          .select()
-          .single();
-
-        if (insertErr) {
-          throw new Error(insertErr.message);
-        }
-        row = insertData;
-      }
-
-      res.json({
-        id: row.id,
-        nombre: row.nombre,
-        email: row.email,
-        cargo: row.cargo,
-        rol: row.rol,
-        avatarInitials: row.avatar_initials,
-        permisos: row.permisos,
-        requireEmailVerification
-      });
-    } catch (err: any) {
-      console.error("Error en /api/auth/register:", err.message);
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  app.post("/api/auth/verify", async (req, res) => {
-    const { email, code } = req.body;
-    try {
-      let verifySuccess = false;
-      let realUserId: string | undefined;
-      let accessToken: string | undefined;
-
-      const { data: verifyData, error: verifyError } = await insforge.auth.verifyEmail({
-        email: email.toLowerCase(),
-        otp: code
-      });
-
-      if (!verifyError) {
-        verifySuccess = true;
-        realUserId = verifyData?.user?.id;
-        accessToken = verifyData?.accessToken;
-      } else {
-        // La verificación la gestiona íntegramente InsForge mediante la API key.
-        // Si falla, se devuelve el error traducido al cliente.
-        console.error("InsForge verifyEmail error:", verifyError);
-        return res.status(400).json({ error: translateAuthError(verifyError.message) });
-      }
-
-      if (!realUserId) {
-        return res.status(500).json({ error: "No se pudo recuperar el ID del usuario verificado." });
-      }
-
-      // Check if a profile with the realUserId already exists
-      const { data: existingProfile, error: checkErr } = await insforge.database
-        .from("usuarios")
-        .select("*")
-        .eq("id", realUserId)
-        .maybeSingle();
-
-      if (checkErr) {
-        console.error("Error checking existing profile:", checkErr.message);
-      }
-
-      let row;
-      if (existingProfile) {
-        row = existingProfile;
-      } else {
-        // Try to update the temporary profile ID to the realUserId
-        const { data: updateData, error: updateErr } = await insforge.database
-          .from("usuarios")
-          .update({ id: realUserId })
-          .eq("email", email.toLowerCase())
-          .select()
-          .single();
-
-        if (updateErr) {
-          console.error("Error updating user ID to realUserId:", updateErr.message);
-          // If update failed, let's select by email
-          const { data: selectData, error: selectErr } = await insforge.database
-            .from("usuarios")
-            .select("*")
-            .eq("email", email.toLowerCase())
-            .maybeSingle();
-            
-          if (selectErr || !selectData) {
-            throw new Error("No se pudo sincronizar el perfil de usuario verificado.");
-          }
-          row = selectData;
-        } else {
-          row = updateData;
-        }
-      }
-
-      res.json({
-        id: row.id,
-        nombre: row.nombre,
-        email: row.email,
-        cargo: row.cargo,
-        rol: row.rol,
-        avatarInitials: row.avatar_initials,
-        permisos: row.permisos,
-        accessToken: accessToken
-      });
-    } catch (err: any) {
-      console.error("Error en /api/auth/verify:", err.message);
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  app.post("/api/auth/resend", async (req, res) => {
-    const { email } = req.body;
-    try {
-      const { data, error } = await insforge.auth.resendVerificationEmail({
-        email: email.toLowerCase()
-      });
-
-      if (error) {
-        console.error("InsForge resend error:", error);
-        return res.status(400).json({ error: translateAuthError(error.message) });
-      }
-
-      res.json({ success: true, message: data?.message || "Código de verificación reenviado exitosamente." });
-    } catch (err: any) {
-      console.error("Error en /api/auth/resend:", err.message);
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  app.post("/api/auth/forgot-password", async (req, res) => {
-    const { email } = req.body;
-    try {
-      let redirectUrl = "http://localhost:3000";
-      if (process.env.APP_URL && process.env.APP_URL.startsWith("http")) {
-        redirectUrl = process.env.APP_URL;
-      }
-
-      const { data, error } = await insforge.auth.sendResetPasswordEmail({
-        email: email.toLowerCase(),
-        redirectTo: redirectUrl
-      });
-
-      if (error) {
-        console.error("InsForge sendResetPasswordEmail error:", error);
-        return res.status(400).json({ error: translateAuthError(error.message) });
-      }
-
-      res.json({ success: true, message: data?.message || "Enlace de restablecimiento enviado exitosamente." });
-    } catch (err: any) {
-      console.error("Error en /api/auth/forgot-password:", err.message);
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  app.post("/api/auth/reset-password", async (req, res) => {
-    const { token, password } = req.body;
-    try {
-      const { data, error } = await insforge.auth.resetPassword({
-        otp: token,
-        newPassword: password
-      });
-
-      if (error) {
-        console.error("InsForge resetPassword error:", error);
-        return res.status(400).json({ error: translateAuthError(error.message) });
-      }
-
-      res.json({ success: true, message: data?.message || "Contraseña restablecida exitosamente." });
-    } catch (err: any) {
-      console.error("Error en /api/auth/reset-password:", err.message);
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  app.post("/api/auth/login", async (req, res) => {
-    const { email, password } = req.body;
-    try {
-      const { data: loginData, error: loginError } = await insforge.auth.signInWithPassword({
-        email: email.toLowerCase(),
-        password
-      });
-
-      if (loginError) {
-        console.error("InsForge signIn error:", loginError);
-        // Handle specific case when email is not verified
-        if (loginError.error === "EMAIL_NOT_VERIFIED") {
-          return res.status(403).json({ error: translateAuthError(loginError.message), requireEmailVerification: true });
-        }
-        return res.status(401).json({ error: translateAuthError(loginError.message) });
-      }
-
-      // Query user profile from database
-      const { data: userProfile, error: profileErr } = await insforge.database
-        .from("usuarios")
-        .select("*")
-        .eq("email", email.toLowerCase())
-        .maybeSingle();
-
-      if (profileErr) {
-        throw new Error(profileErr.message);
-      }
-
-      if (!userProfile) {
-        // If profile doesn't exist in our table, let's create it dynamically using the Auth metadata
-        const userObj = loginData?.user;
-        const nombreObj = userObj?.profile?.name || "Colaborador";
-        const { data: row, error: insertErr } = await insforge.database
-          .from("usuarios")
-          .insert({
-            id: userObj?.id,
-            nombre: nombreObj,
-            email: email.toLowerCase(),
-            cargo: "Colaborador",
-            rol: "ADMIN", // default admin for fallback sync
-            avatar_initials: nombreObj.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase(),
-            permisos: ['panel','finanzas','rrhh','documentos','produccion','configuracion']
-          })
-          .select()
-          .single();
-
-        if (insertErr) {
-          throw new Error(insertErr.message);
-        }
-
-        return res.json({
-          id: row.id,
-          nombre: row.nombre,
-          email: row.email,
-          cargo: row.cargo,
-          rol: row.rol,
-          avatarInitials: row.avatar_initials,
-          permisos: row.permisos,
-          accessToken: loginData?.accessToken
-        });
-      }
-
-      res.json({
-        id: userProfile.id,
-        nombre: userProfile.nombre,
-        email: userProfile.email,
-        cargo: userProfile.cargo,
-        rol: userProfile.rol,
-        avatarInitials: userProfile.avatar_initials,
-        permisos: userProfile.permisos,
-        accessToken: loginData?.accessToken
-      });
-    } catch (err: any) {
-      console.error("Error en /api/auth/login:", err.message);
-      res.status(500).json({ error: err.message });
-    }
-  });
-
   app.get("/api/usuarios/:id", async (req, res) => {
     try {
+      const me = getAuthUser(req)!;
+      const ref = req.params.id.toLowerCase();
+      if (me.rol !== "ADMIN" && ref !== me.id.toLowerCase() && ref !== me.email) {
+        return res.status(403).json({ error: "No autorizado." });
+      }
       const isEmail = req.params.id.includes("@");
       const baseQuery = insforge.database.from("usuarios").select("*");
       const query = isEmail
@@ -591,24 +350,64 @@ async function startServer() {
   // GENERIC DB PROXY ENDPOINT
   // ─────────────────────────────────────────────────────────────
   
-  app.post("/api/db/:table", async (req, res) => {
-    try {
-      const role = getRole(req);
-      if (role === 'ANON') {
-        console.warn(`Alerta de seguridad: Inserción anónima en tabla ${req.params.table}`);
-      }
-      
-      const { table } = req.params;
-      const { data, error } = await insforge.database
-        .from(table)
-        .insert(req.body)
-        .select();
+  // Proxy genérico: solo tablas conocidas, y solo roles autorizados por tabla.
+  // Los errores internos no se devuelven al cliente (se registran en el servidor).
+  const checkTable = (req: express.Request, res: express.Response, op: TableOp): string | null => {
+    const table = req.params.table;
+    const perm = tablePermission(table, getRole(req), op);
+    if (perm === 'unknown') { res.status(404).json({ error: "Tabla no disponible." }); return null; }
+    if (perm === 'forbidden') { res.status(403).json({ error: "No autorizado." }); return null; }
+    return table;
+  };
 
+  app.post("/api/db/:table", async (req, res) => {
+    const table = checkTable(req, res, 'insert');
+    if (!table) return;
+    try {
+      const rows = Array.isArray(req.body) ? req.body : [req.body];
+      if (rows.length === 0 || rows.length > 500 || rows.some((r) => !r || typeof r !== 'object' || Array.isArray(r))) {
+        return res.status(400).json({ error: "Cuerpo inválido." });
+      }
+      const { data, error } = await insforge.database.from(table).insert(rows).select();
       if (error) throw new Error(error.message);
       res.json(data);
     } catch (err: any) {
-      console.error(`Error en POST /api/db/${req.params.table}:`, err.message);
-      res.status(500).json({ error: err.message });
+      console.error(`Error en POST /api/db/${table}:`, err.message);
+      res.status(500).json({ error: "No se pudo guardar el registro." });
+    }
+  });
+
+  app.put("/api/db/:table/:id", async (req, res) => {
+    const table = checkTable(req, res, 'update');
+    if (!table) return;
+    try {
+      if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+        return res.status(400).json({ error: "Cuerpo inválido." });
+      }
+      const { id: _ignored, ...changes } = req.body;
+      const { data, error } = await insforge.database
+        .from(table)
+        .update(changes)
+        .eq('id', req.params.id)
+        .select();
+      if (error) throw new Error(error.message);
+      res.json(data);
+    } catch (err: any) {
+      console.error(`Error en PUT /api/db/${table}/${req.params.id}:`, err.message);
+      res.status(500).json({ error: "No se pudo actualizar el registro." });
+    }
+  });
+
+  app.delete("/api/db/:table/:id", async (req, res) => {
+    const table = checkTable(req, res, 'delete');
+    if (!table) return;
+    try {
+      const { error } = await insforge.database.from(table).delete().eq('id', req.params.id);
+      if (error) throw new Error(error.message);
+      res.json({ success: true });
+    } catch (err: any) {
+      console.error(`Error en DELETE /api/db/${table}/${req.params.id}:`, err.message);
+      res.status(500).json({ error: "No se pudo eliminar el registro." });
     }
   });
 
@@ -1471,8 +1270,14 @@ async function startServer() {
     try {
       const { prompt, databaseState } = req.body;
       
-      if (!prompt) {
+      if (!prompt || typeof prompt !== 'string') {
         return res.status(400).json({ error: "Falta el mensaje (prompt) en la solicitud." });
+      }
+      if (prompt.length > MAX_PROMPT_CHARS || JSON.stringify(databaseState ?? null).length > MAX_STATE_CHARS) {
+        return res.status(413).json({ error: "La consulta es demasiado grande." });
+      }
+      if (!assistantRateLimit(getAuthUser(req)!.id)) {
+        return res.status(429).json({ error: "Demasiadas consultas. Intente de nuevo en un minuto." });
       }
 
       const apiKey = process.env.GEMINI_API_KEY;
@@ -1539,8 +1344,7 @@ Al responder:
     } catch (error: any) {
       console.error("Error en endpoint /api/assistant:", error);
       return res.status(500).json({ 
-        error: "Ocurrió un error en el procesamiento de la inteligencia artificial.",
-        details: error.message 
+        error: "Ocurrió un error en el procesamiento de la inteligencia artificial."
       });
     }
   });
@@ -1559,40 +1363,6 @@ Al responder:
       res.sendFile(path.join(distPath, "index.html"));
     });
   }
-
-  
-app.put('/api/db/:table/:id', async (req, res) => {
-  const { table, id } = req.params;
-  try {
-    const { data, error } = await insforge.database
-      .from(table)
-      .update(req.body)
-      .eq('id', id)
-      .select();
-
-    if (error) throw error;
-    res.json(data);
-  } catch (error) {
-    console.error(`Error in PUT /api/db/${table}/${id}:`, error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.delete('/api/db/:table/:id', async (req, res) => {
-  const { table, id } = req.params;
-  try {
-    const { data, error } = await insforge.database
-      .from(table)
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
-    res.json({ success: true, data });
-  } catch (error) {
-    console.error(`Error in DELETE /api/db/${table}/${id}:`, error);
-    res.status(500).json({ error: error.message });
-  }
-});
 
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`[TAPASEL FLOW AI] Servidor corriendo en el puerto ${PORT}`);

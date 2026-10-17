@@ -159,7 +159,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
         setVerificationEmail(newUser.email);
         setMode('verify');
       } else {
-        onLoginSuccess(newUser);
+        onLoginSuccess({ ...newUser, rol: 'PENDIENTE', permisos: ['panel'] });
       }
     } catch (err: any) {
       setErrorMessage(translateError(err.message || 'Error al crear la cuenta. Intente nuevamente.'));

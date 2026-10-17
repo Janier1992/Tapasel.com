@@ -34,6 +34,9 @@ const USER_STORAGE_KEY = 'tapasel_flow_user';
 // Permisos por defecto para un usuario sin perfil explícito en la base de datos.
 const DEFAULT_PERMISOS = ['panel', 'finanzas', 'rrhh', 'documentos', 'produccion', 'configuracion'];
 
+// Cuenta sin perfil aprobado: el rol real lo asigna un administrador en `usuarios`.
+const PENDING_PERMISOS = ['panel'];
+
 export enum OperationType {
   CREATE = 'create',
   UPDATE = 'update',
@@ -46,13 +49,30 @@ export enum OperationType {
 // ─────────────────────────────────────────────────────────────
 // FUNCIÓN UNIVERSAL DE INSERCIÓN VIA BACKEND (PROXY)
 // ─────────────────────────────────────────────────────────────
+/**
+ * getAuthHeaders — Cabecera Authorization con el token de la sesión activa de
+ * InsForge. El servidor verifica el token y decide el rol; el cliente no lo declara.
+ */
+export async function getAuthHeaders(): Promise<Record<string, string>> {
+  try {
+    let token: string | null = (insforge as any).tokenManager?.getAccessToken?.() ?? null;
+    if (!token) {
+      const { data } = await insforge.auth.refreshSession();
+      token = data?.accessToken ?? null;
+    }
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  } catch (_) {
+    return {};
+  }
+}
+
 export async function apiInsert(table: string, data: any) {
   try {
     const res = await fetch(`/api/db/${table}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-user-role": auth.currentUser?.rol || "ANON"
+        ...(await getAuthHeaders())
       },
       body: JSON.stringify(data)
     });
@@ -93,7 +113,7 @@ function mapRowToUsuario(row: any): Usuario {
     nombre: row.nombre,
     email: row.email,
     cargo: row.cargo || 'Colaborador',
-    rol: row.rol || 'ADMIN',
+    rol: row.rol || 'PENDIENTE',
     avatarInitials: row.avatar_initials || getInitials(row.nombre),
     permisos: row.permisos || DEFAULT_PERMISOS
   };
@@ -111,9 +131,9 @@ function buildDefaultUsuario(authUser: any, email: string): Usuario {
     nombre,
     email: email.toLowerCase(),
     cargo: 'Colaborador',
-    rol: 'ADMIN',
+    rol: 'PENDIENTE',
     avatarInitials: getInitials(nombre),
-    permisos: DEFAULT_PERMISOS
+    permisos: PENDING_PERMISOS
   };
 }
 
@@ -265,7 +285,7 @@ export async function setDoc(docRef: { collection: string; id: string }, data: a
     // 1. Alta del usuario en el servicio de autenticación de InsForge.
     const { data: signUpData, error: signUpError } = await insforge.auth.signUp({
       email: String(data.email).toLowerCase(),
-      password: data.password || '123456',
+      password: data.password,
       name: data.nombre,
       redirectTo: getRedirectUrl()
     } as any);
@@ -285,9 +305,9 @@ export async function setDoc(docRef: { collection: string; id: string }, data: a
           nombre: data.nombre,
           email: String(data.email).toLowerCase(),
           cargo: data.cargo,
-          rol: data.rol,
+          rol: 'PENDIENTE',
           avatar_initials: data.avatarInitials || getInitials(data.nombre),
-          permisos: data.permisos || DEFAULT_PERMISOS
+          permisos: PENDING_PERMISOS
         }
       ]);
     } catch (err) {
@@ -304,9 +324,9 @@ export async function setDoc(docRef: { collection: string; id: string }, data: a
       nombre: data.nombre,
       email: String(data.email).toLowerCase(),
       cargo: data.cargo,
-      rol: data.rol,
+      rol: 'PENDIENTE',
       avatarInitials: data.avatarInitials || getInitials(data.nombre),
-      permisos: data.permisos || DEFAULT_PERMISOS
+      permisos: PENDING_PERMISOS
     };
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(usuario));
     return { success: true, requireEmailVerification: false };
@@ -414,7 +434,7 @@ export const apiUpdate = async (table: string, id: string | number, data: any) =
   try {
     const res = await fetch(`/api/db/${table}/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
       body: JSON.stringify(data)
     });
 
@@ -433,7 +453,8 @@ export const apiUpdate = async (table: string, id: string | number, data: any) =
 export const apiDelete = async (table: string, id: string | number) => {
   try {
     const res = await fetch(`/api/db/${table}/${id}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: await getAuthHeaders()
     });
 
     if (!res.ok) {
