@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { db, auth, handleFirestoreError, OperationType, doc, getDoc, setDoc } from '../services/backendClient';
 import { Usuario } from '../types';
+import UserApprovals from './UserApprovals';
 
 interface ConfiguracionTabProps {
   currentUser: Usuario;
@@ -169,6 +170,8 @@ export default function ConfiguracionTab({ currentUser, appendLog }: Configuraci
 
   return (
     <div className="space-y-8 animate-fadeIn">
+      {currentUser.rol === 'ADMIN' && <UserApprovals currentUser={currentUser} appendLog={appendLog} />}
+
       {/* Module Title and Status */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div>

@@ -1,3 +1,4 @@
+import { getAuthHeaders } from '../services/backendClient';
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Bot, 
@@ -93,7 +94,8 @@ export default function AiAssistant({
       const response = await fetch('/api/assistant', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(await getAuthHeaders())
         },
         body: JSON.stringify({
           prompt: text,

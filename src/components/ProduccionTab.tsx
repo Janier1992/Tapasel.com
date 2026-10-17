@@ -1,15 +1,15 @@
 import toast from 'react-hot-toast';
 import React, { useState, useEffect } from 'react';
-import {   
-  Cpu, 
-  Plus, 
-  Search, 
-  Sparkles, 
-  CheckCircle, 
-  AlertCircle, 
-  ArrowRight, 
-  Activity, 
-  Filter, 
+import {
+  Cpu,
+  Plus,
+  Search,
+  Sparkles,
+  CheckCircle,
+  AlertCircle,
+  ArrowRight,
+  Activity,
+  Filter,
   Clock,
   Layers,
   Percent,
@@ -24,14 +24,15 @@ import {
   Calendar,
   Compass,
   ArrowUpRight,
-  Pencil
-, Eye, Pencil, Trash, FileDown , Eye, Pencil, Trash, FileDown } from 'lucide-react';
+  Pencil,
+  Eye,
+  Trash,
+  FileDown,
+} from 'lucide-react';
 import { GenericViewModal, GenericEditModal } from './GenericModals';
-import { exportRecordToPDF, exportTableToPDF } from '../utils/pdfExport';
 import { apiDelete } from '../services/backendClient';
 
 import { exportRecordToPDF, exportTableToPDF } from '../utils/pdfExport';
-import toast from 'react-hot-toast';
 import { OrdenProduccion, Transaccion } from '../types';
 import { formatCurrencyCOP as formatCurrency } from '../lib/formatters';
 import { ORDENES_PRODUCCION_INICIALES } from '../mockData';

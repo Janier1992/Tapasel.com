@@ -33,7 +33,7 @@ import {
   PROVEEDORES_INICIALES,
   COTIZACIONES_INICIALES
 } from './mockData';
-import { insforge, apiInsert } from './services/backendClient';
+import { insforge, apiInsert, uploadDocumentFile } from './services/backendClient';
 
 // Modular view blocks
 import Sidebar from './components/Sidebar';
@@ -302,18 +302,7 @@ export default function App() {
     setScanningDocument(true);
 
     try {
-      let documentUrl = '';
-      let storagePath = '';
-      if (selectedFile) {
-        const fileExt = selectedFile.name.split('.').pop();
-        storagePath = `doc_${Date.now()}.${fileExt}`;
-        const { data: uploadData, error: uploadError } = await insforge.storage.from('documentos').upload(storagePath, selectedFile);
-        if (uploadError) {
-          console.warn("Error uploading file:", uploadError);
-        } else {
-          documentUrl = insforge.storage.from('documentos').getPublicUrl(storagePath).data.publicUrl;
-        }
-      }
+      const storagePath = selectedFile ? await uploadDocumentFile(selectedFile) : '';
 
       const docNameInput = data.get('nombre') || 'escaneado_factura';
       const finalName = selectedFile ? `${docNameInput}.${selectedFile.name.split('.').pop()}` : `${docNameInput}.pdf`;
@@ -328,13 +317,14 @@ export default function App() {
         version: "v1.0.0",
         tamano: selectedFile ? `${(selectedFile.size / 1024).toFixed(1)} KB` : "840 KB",
         estadoVerificacion: "Verificado",
-        tipoDocumental: data.get('tipoDocumental') as string || "Contrato",
+        tieneArchivo: !!storagePath,
+        tipoDocumental: (data.get('tipoDocumental') as Documento['tipoDocumental']) || "Contrato",
         historialVersiones: [
           { 
             version: "v1.0.0", 
             fecha: new Date().toISOString().replace('T', ' ').substring(0, 16), 
             usuario: currentUser?.nombre || 'Colaborador', 
-            comentario: documentUrl ? `Documento físico subido y radicado: ${documentUrl}` : "Documento radicado de forma autónoma tras escaneo y reconocimiento de texto OCR de alta precisión." 
+            comentario: storagePath ? `Documento físico subido y radicado: ${selectedFile?.name}` : "Documento radicado de forma autónoma tras escaneo y reconocimiento de texto OCR de alta precisión." 
           }
         ]
       };
@@ -353,8 +343,7 @@ export default function App() {
           tamano: newDoc.tamano,
           estado_verificacion: newDoc.estadoVerificacion,
           tipo_documental: newDoc.tipoDocumental,
-          archivo_url: documentUrl,
-          storage_path: storagePath
+          storage_path: storagePath || null
         }]);
       } catch (err) {
         console.warn("No se pudo guardar documento en DB", err);
@@ -734,7 +723,8 @@ export default function App() {
                   version: newDoc.version,
                   tamano: newDoc.tamano,
                   estado_verificacion: newDoc.estadoVerificacion,
-                  tipo_documental: newDoc.tipoDocumental
+                  tipo_documental: newDoc.tipoDocumental,
+                  storage_path: newDoc.storage_path || null
                 }]).catch(console.warn);
                 appendLog(
                   "Agente de Documentos",

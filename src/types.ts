@@ -53,6 +53,9 @@ export interface Documento {
   tamano: string;
   estadoVerificacion: 'Verificado' | 'Chequeo Neural' | 'Pendiente Verificación';
   tipoDocumental: 'Contrato' | 'Incapacidad' | 'Vacaciones' | 'Certificado' | 'Legal' | 'Financia';
+  tieneArchivo?: boolean;
+  /** Ruta interna en el bucket privado; solo viaja del formulario al servidor. */
+  storage_path?: string;
   historialVersiones: Array<{
     version: string;
     fecha: string;
@@ -90,7 +93,7 @@ export interface Usuario {
   nombre: string;
   email: string;
   cargo: string;
-  rol: 'ADMIN' | 'CFO' | 'RRHH' | 'COO';
+  rol: 'ADMIN' | 'CFO' | 'RRHH' | 'COO' | 'PENDIENTE';
   avatarInitials: string;
   permisos: string[];
 }

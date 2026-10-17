@@ -1,18 +1,18 @@
 import toast from 'react-hot-toast';
 import React, { useState, useEffect } from 'react';
-import {   
-  Users, 
-  Search, 
-  Plus, 
-  Grid, 
-  List, 
-  Briefcase, 
-  MapPin, 
-  Phone, 
-  Mail, 
-  DollarSign, 
-  Calendar, 
-  ArrowRight, 
+import {
+  Users,
+  Search,
+  Plus,
+  Grid,
+  List,
+  Briefcase,
+  MapPin,
+  Phone,
+  Mail,
+  DollarSign,
+  Calendar,
+  ArrowRight,
   AlertCircle,
   Clock,
   ShieldAlert,
@@ -40,14 +40,16 @@ import {
   Receipt,
   Check,
   FileSpreadsheet,
-  BarChart3
-, Eye, Pencil, Trash, FileDown , Eye, Pencil, Trash, FileDown } from 'lucide-react';
+  BarChart3,
+  Eye,
+  Pencil,
+  Trash,
+  FileDown,
+} from 'lucide-react';
 import { GenericViewModal, GenericEditModal } from './GenericModals';
-import { exportRecordToPDF, exportTableToPDF } from '../utils/pdfExport';
 import { apiDelete } from '../services/backendClient';
 
 import { exportRecordToPDF, exportTableToPDF } from '../utils/pdfExport';
-import toast from 'react-hot-toast';
 import { Empleado, Transaccion } from '../types';
 import { formatCurrencyCOP as formatCurrency } from '../lib/formatters';
 

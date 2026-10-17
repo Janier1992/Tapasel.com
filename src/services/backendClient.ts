@@ -18,6 +18,7 @@
  */
 import { createClient } from '@insforge/sdk';
 import { Usuario } from '../types';
+import { PASSWORD_TOO_SHORT_MESSAGE } from '../lib/passwordPolicy';
 import { ERP_USUARIOS } from '../mockData';
 
 // URL pública del proyecto InsForge (no es secreta). Configurable por entorno.
@@ -34,6 +35,9 @@ const USER_STORAGE_KEY = 'tapasel_flow_user';
 // Permisos por defecto para un usuario sin perfil explícito en la base de datos.
 const DEFAULT_PERMISOS = ['panel', 'finanzas', 'rrhh', 'documentos', 'produccion', 'configuracion'];
 
+// Cuenta sin perfil aprobado: el rol real lo asigna un administrador en `usuarios`.
+const PENDING_PERMISOS = ['panel'];
+
 export enum OperationType {
   CREATE = 'create',
   UPDATE = 'update',
@@ -46,13 +50,30 @@ export enum OperationType {
 // ─────────────────────────────────────────────────────────────
 // FUNCIÓN UNIVERSAL DE INSERCIÓN VIA BACKEND (PROXY)
 // ─────────────────────────────────────────────────────────────
+/**
+ * getAuthHeaders — Cabecera Authorization con el token de la sesión activa de
+ * InsForge. El servidor verifica el token y decide el rol; el cliente no lo declara.
+ */
+export async function getAuthHeaders(): Promise<Record<string, string>> {
+  try {
+    let token: string | null = (insforge as any).tokenManager?.getAccessToken?.() ?? null;
+    if (!token) {
+      const { data } = await insforge.auth.refreshSession();
+      token = data?.accessToken ?? null;
+    }
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  } catch (_) {
+    return {};
+  }
+}
+
 export async function apiInsert(table: string, data: any) {
   try {
     const res = await fetch(`/api/db/${table}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-user-role": auth.currentUser?.rol || "ANON"
+        ...(await getAuthHeaders())
       },
       body: JSON.stringify(data)
     });
@@ -65,6 +86,66 @@ export async function apiInsert(table: string, data: any) {
     console.error(`[apiInsert] Error guardando en ${table}:`, err);
     throw err;
   }
+}
+
+// ─────────────────────────────────────────────────────────────
+// ARCHIVOS DE DOCUMENTOS (bucket privado)
+// ─────────────────────────────────────────────────────────────
+// El bucket `documentos` es privado: no hay URL pública. Se guarda solo la ruta
+// interna (`storage_path`) y la descarga pasa por /api/documentos/:id/archivo,
+// donde el servidor verifica la sesión y el rol antes de entregar el archivo.
+const ALLOWED_DOC_EXTENSIONS = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'csv', 'txt', 'png', 'jpg', 'jpeg'];
+const MAX_DOC_BYTES = 20 * 1024 * 1024;
+
+/** uploadDocumentFile — Sube un archivo al bucket privado y devuelve su ruta interna. */
+export async function uploadDocumentFile(file: File): Promise<string> {
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  if (!ALLOWED_DOC_EXTENSIONS.includes(ext)) {
+    throw new Error(`Tipo de archivo no permitido (.${ext}). Use: ${ALLOWED_DOC_EXTENSIONS.join(', ')}.`);
+  }
+  if (file.size > MAX_DOC_BYTES) {
+    throw new Error('El archivo supera el máximo de 20 MB.');
+  }
+  const storagePath = `${crypto.randomUUID()}.${ext}`;
+  const { error } = await insforge.storage.from('documentos').upload(storagePath, file);
+  if (error) throw new Error(error.message || 'No se pudo subir el archivo.');
+  return storagePath;
+}
+
+/** downloadDocumentFile — Descarga el archivo de un documento a través del servidor. */
+export async function downloadDocumentFile(docId: string, nombre: string) {
+  const res = await fetch(`/api/documentos/${encodeURIComponent(docId)}/archivo`, {
+    headers: await getAuthHeaders()
+  });
+  if (!res.ok) {
+    let msg = 'No se pudo descargar el archivo.';
+    try { msg = (await res.json()).error || msg; } catch (_) { /* respuesta no JSON */ }
+    throw new Error(msg);
+  }
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nombre;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
+// ─────────────────────────────────────────────────────────────
+// APROBACIÓN DE USUARIOS (solo ADMIN; el servidor lo verifica)
+// ─────────────────────────────────────────────────────────────
+export async function listUsuarios(): Promise<Usuario[]> {
+  const res = await fetch('/api/usuarios', { headers: await getAuthHeaders() });
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'No se pudo listar los usuarios.');
+  return res.json();
+}
+
+export async function setUsuarioRol(id: string, rol: Usuario['rol']): Promise<void> {
+  const res = await fetch(`/api/usuarios/${encodeURIComponent(id)}/rol`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
+    body: JSON.stringify({ rol })
+  });
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'No se pudo actualizar el rol.');
 }
 
 // Referencia simbólica de base de datos (compatibilidad con la API previa).
@@ -93,7 +174,7 @@ function mapRowToUsuario(row: any): Usuario {
     nombre: row.nombre,
     email: row.email,
     cargo: row.cargo || 'Colaborador',
-    rol: row.rol || 'ADMIN',
+    rol: row.rol || 'PENDIENTE',
     avatarInitials: row.avatar_initials || getInitials(row.nombre),
     permisos: row.permisos || DEFAULT_PERMISOS
   };
@@ -111,9 +192,9 @@ function buildDefaultUsuario(authUser: any, email: string): Usuario {
     nombre,
     email: email.toLowerCase(),
     cargo: 'Colaborador',
-    rol: 'ADMIN',
+    rol: 'PENDIENTE',
     avatarInitials: getInitials(nombre),
-    permisos: DEFAULT_PERMISOS
+    permisos: PENDING_PERMISOS
   };
 }
 
@@ -140,11 +221,12 @@ async function fetchPerfilUsuario(authUser: any, email: string): Promise<Usuario
 function translateAuthError(message?: string): string {
   if (!message) return 'Ha ocurrido un error inesperado.';
   const msg = message.toLowerCase();
+  if (msg.includes('rate_limited') || msg.includes('rate limit') || msg.includes('too many')) return 'Demasiados intentos. Espere unos minutos antes de intentar de nuevo.';
   if (msg.includes('signup') && msg.includes('disabled')) return 'El registro de usuarios está desactivado.';
   if (msg.includes('already') || msg.includes('unique')) return 'El usuario ya se encuentra registrado con este correo.';
   if (msg.includes('invalid') && msg.includes('credential')) return 'Credenciales inválidas. Verifique su correo y contraseña.';
   if (msg.includes('not verified') || msg.includes('email_not_verified')) return 'Debe confirmar su cuenta desde el correo electrónico para acceder.';
-  if (msg.includes('password')) return 'La contraseña debe tener al menos 6 caracteres.';
+  if (msg.includes('password')) return PASSWORD_TOO_SHORT_MESSAGE;
   if (msg.includes('invalid otp') || msg.includes('verification code') || msg.includes('incorrect code')) return 'Código de verificación inválido. Intente nuevamente.';
   if (msg.includes('not found')) return 'Usuario no encontrado en el sistema. Cree una cuenta primero.';
   return message;
@@ -172,6 +254,7 @@ class SessionManager {
         uid: parsed.id || 'demo-uid',
         email: parsed.email || 'colaborador@tapasel.co',
         displayName: parsed.nombre || 'Colaborador',
+        rol: parsed.rol as string | undefined,
         emailVerified: true,
         isAnonymous: false,
         tenantId: null,
@@ -264,7 +347,7 @@ export async function setDoc(docRef: { collection: string; id: string }, data: a
     // 1. Alta del usuario en el servicio de autenticación de InsForge.
     const { data: signUpData, error: signUpError } = await insforge.auth.signUp({
       email: String(data.email).toLowerCase(),
-      password: data.password || '123456',
+      password: data.password,
       name: data.nombre,
       redirectTo: getRedirectUrl()
     } as any);
@@ -284,9 +367,9 @@ export async function setDoc(docRef: { collection: string; id: string }, data: a
           nombre: data.nombre,
           email: String(data.email).toLowerCase(),
           cargo: data.cargo,
-          rol: data.rol,
+          rol: 'PENDIENTE',
           avatar_initials: data.avatarInitials || getInitials(data.nombre),
-          permisos: data.permisos || DEFAULT_PERMISOS
+          permisos: PENDING_PERMISOS
         }
       ]);
     } catch (err) {
@@ -303,9 +386,9 @@ export async function setDoc(docRef: { collection: string; id: string }, data: a
       nombre: data.nombre,
       email: String(data.email).toLowerCase(),
       cargo: data.cargo,
-      rol: data.rol,
+      rol: 'PENDIENTE',
       avatarInitials: data.avatarInitials || getInitials(data.nombre),
-      permisos: data.permisos || DEFAULT_PERMISOS
+      permisos: PENDING_PERMISOS
     };
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(usuario));
     return { success: true, requireEmailVerification: false };
@@ -413,7 +496,7 @@ export const apiUpdate = async (table: string, id: string | number, data: any) =
   try {
     const res = await fetch(`/api/db/${table}/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
       body: JSON.stringify(data)
     });
 
@@ -432,7 +515,8 @@ export const apiUpdate = async (table: string, id: string | number, data: any) =
 export const apiDelete = async (table: string, id: string | number) => {
   try {
     const res = await fetch(`/api/db/${table}/${id}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: await getAuthHeaders()
     });
 
     if (!res.ok) {
