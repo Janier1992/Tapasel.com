@@ -46,7 +46,8 @@ Tapasel/
 ├── index.html                  # HTML raíz de la SPA
 ├── server.ts                   # Servidor Express: API REST + InsForge + Gemini + Vite (solo en desarrollo)
 ├── server/
-│   └── auth.ts                 # Verificación de sesión y rol en el servidor, mapa rol → permisos
+│   ├── auth.ts                 # Verificación de sesión y rol en el servidor, mapa rol → permisos
+│   └── assistantContext.ts     # Extracto mínimo de datos que se envía a Gemini
 ├── vite.config.ts              # Configuración de Vite
 ├── tsconfig.json               # Configuración de TypeScript
 ├── package.json                # Dependencias y scripts
@@ -83,7 +84,7 @@ Tapasel/
 - **El servidor es la autoridad:** toda la API exige un token de sesión de InsForge válido y lee el rol de la tabla `usuarios`; no confía en nada que declare el cliente. Un usuario sin perfil aprobado recibe 401.
 - El proxy genérico `/api/db/*` solo opera sobre tablas conocidas y con roles autorizados por tabla.
 - Documentos: bucket privado; el archivo se descarga por `GET /api/documentos/:id/archivo` con sesión y rol.
-- El asistente de IA exige sesión y limita tamaño de consulta y frecuencia (20/min por usuario).
+- El asistente de IA exige sesión, limita tamaño y frecuencia (20/min por usuario) y solo recibe un extracto mínimo de datos elegido por el servidor según el rol.
 - El freno de intentos del login (`attemptLimiter`) solo protege el navegador. **La protección real contra fuerza bruta debe configurarse en InsForge.**
 
 ### Panel principal (Dashboard)
@@ -284,4 +285,4 @@ El frontend usa `VITE_INSFORGE_PROJECT_URL` (pública) en tiempo de build.
 
 - Las claves de Gemini e InsForge se leen del entorno (`.env.local` en local); nunca deben subirse al control de versiones.
 - El servidor escucha en `0.0.0.0` por defecto. Para limitarlo a la máquina local, define `HOST=127.0.0.1`.
-- Pendiente: el asistente de IA aún envía datos del negocio a Gemini; conviene reducirlos a resúmenes.
+- El asistente de IA recibe un extracto mínimo construido en el servidor (`server/assistantContext.ts`): lista blanca de campos por rol, sin correos, teléfonos ni salarios, hasta 100 filas por colección.

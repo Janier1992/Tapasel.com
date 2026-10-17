@@ -11,8 +11,8 @@ export default defineConfig({
   test: {
     // Entorno Node: las utilidades probadas son puras y no requieren DOM.
     environment: 'node',
-    // Solo se ejecutan archivos *.test.ts dentro de src/.
-    include: ['src/**/*.test.ts'],
+    // Solo se ejecutan archivos *.test.ts dentro de src/ y server/.
+    include: ['src/**/*.test.ts', 'server/**/*.test.ts'],
     globals: true
   }
 });
