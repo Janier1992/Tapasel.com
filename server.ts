@@ -122,7 +122,8 @@ function translateAuthError(message: string): string {
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
+  const HOST = process.env.HOST || "0.0.0.0";
 
   // Enable JSON request body parsing
   app.disable("x-powered-by");
@@ -133,6 +134,9 @@ async function startServer() {
     next();
   });
   app.use(express.json({ limit: "1mb" }));
+
+  // Comprobación de salud para el balanceador/plataforma (sin sesión ni datos).
+  app.get("/healthz", (_req, res) => res.json({ status: "ok" }));
 
   // Toda la API exige sesión válida de InsForge y un perfil con rol en `usuarios`.
   app.use("/api", async (req, res, next) => {
@@ -1458,7 +1462,7 @@ Al responder:
     });
   }
 
-app.listen(PORT, "0.0.0.0", () => {
+app.listen(PORT, HOST, () => {
     console.log(`[TAPASEL FLOW AI] Servidor corriendo en el puerto ${PORT}`);
   });
 }

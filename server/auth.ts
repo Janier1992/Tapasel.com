@@ -6,8 +6,7 @@
  * se lee de la tabla `usuarios` con la clave de administrador. Si el usuario
  * no tiene perfil, no tiene rol y no puede operar.
  *
- * Lo comparten el servidor Express (server.ts) y la función de Vercel
- * (api/assistant.ts).
+ * Lo usa el servidor Express (server.ts).
  */
 import { createClient, type InsForgeClient } from "@insforge/sdk";
 
