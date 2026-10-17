@@ -4,7 +4,7 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
-import { authenticate, createRateLimiter, getBearerToken, type AppRole, type AuthedUser } from "./server/auth";
+import { authenticate, createRateLimiter, getBearerToken, ROLE_PERMISOS, type AppRole, type AuthedUser } from "./server/auth";
 
 dotenv.config({ path: ".env.local" });
 dotenv.config();
@@ -150,6 +150,69 @@ async function startServer() {
   });
 
   console.log("[TAPASEL DB] Conectado exitosamente a InsForge API Gateway.");
+
+  // Aprobación de usuarios (solo ADMIN): listar y asignar rol. El servidor deriva
+  // los permisos del rol; el cliente no puede enviarlos.
+  app.get("/api/usuarios", async (req, res) => {
+    if (getRole(req) !== "ADMIN") return res.status(403).json({ error: "No autorizado." });
+    try {
+      const { data, error } = await insforge.database
+        .from("usuarios")
+        .select("id, nombre, email, cargo, rol, permisos")
+        .order("nombre", { ascending: true });
+      if (error) throw new Error(error.message);
+      res.json((data || []).map((u: any) => ({
+        id: u.id, nombre: u.nombre, email: u.email, cargo: u.cargo, rol: u.rol, permisos: u.permisos || []
+      })));
+    } catch (err: any) {
+      console.error("Error en GET /api/usuarios:", err.message);
+      res.status(500).json({ error: "No se pudo listar los usuarios." });
+    }
+  });
+
+  app.put("/api/usuarios/:id/rol", async (req, res) => {
+    const me = getAuthUser(req)!;
+    if (me.rol !== "ADMIN") return res.status(403).json({ error: "No autorizado." });
+    try {
+      const nuevoRol = req.body?.rol;
+      if (typeof nuevoRol !== "string" || !Object.prototype.hasOwnProperty.call(ROLE_PERMISOS, nuevoRol)) {
+        return res.status(400).json({ error: "Rol inválido." });
+      }
+      const { data: target, error: findErr } = await insforge.database
+        .from("usuarios")
+        .select("id, email, nombre, rol")
+        .eq("id", req.params.id)
+        .maybeSingle();
+      if (findErr) throw new Error(findErr.message);
+      if (!target) return res.status(404).json({ error: "Usuario no encontrado." });
+      if (target.id === me.id || String(target.email).toLowerCase() === me.email) {
+        return res.status(400).json({ error: "No puede cambiar su propio rol." });
+      }
+
+      const { error } = await insforge.database
+        .from("usuarios")
+        .update({ rol: nuevoRol, permisos: ROLE_PERMISOS[nuevoRol as keyof typeof ROLE_PERMISOS] })
+        .eq("id", target.id);
+      if (error) throw new Error(error.message);
+
+      console.log(`[AUDITORIA] ${me.email} cambió el rol de ${target.email}: ${target.rol} -> ${nuevoRol}`);
+      // Rastro en audit_logs (mejor esfuerzo: no debe impedir el cambio).
+      const now = new Date();
+      await insforge.database.from("audit_logs").insert({
+        id: `L-${Date.now()}`,
+        agente_nombre: "Administración de usuarios",
+        fecha: now.toISOString().slice(0, 10),
+        hora: now.toISOString().slice(11, 16),
+        detalle: `${me.email} cambió el rol de ${target.email}: ${target.rol} → ${nuevoRol}.`,
+        nivel: "Info"
+      }).then(() => undefined, () => undefined);
+
+      res.json({ id: target.id, rol: nuevoRol, permisos: ROLE_PERMISOS[nuevoRol as keyof typeof ROLE_PERMISOS] });
+    } catch (err: any) {
+      console.error(`Error en PUT /api/usuarios/${req.params.id}/rol:`, err.message);
+      res.status(500).json({ error: "No se pudo actualizar el rol." });
+    }
+  });
 
   app.get("/api/usuarios/:id", async (req, res) => {
     try {

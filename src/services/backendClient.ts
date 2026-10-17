@@ -130,6 +130,24 @@ export async function downloadDocumentFile(docId: string, nombre: string) {
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
+// ─────────────────────────────────────────────────────────────
+// APROBACIÓN DE USUARIOS (solo ADMIN; el servidor lo verifica)
+// ─────────────────────────────────────────────────────────────
+export async function listUsuarios(): Promise<Usuario[]> {
+  const res = await fetch('/api/usuarios', { headers: await getAuthHeaders() });
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'No se pudo listar los usuarios.');
+  return res.json();
+}
+
+export async function setUsuarioRol(id: string, rol: Usuario['rol']): Promise<void> {
+  const res = await fetch(`/api/usuarios/${encodeURIComponent(id)}/rol`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
+    body: JSON.stringify({ rol })
+  });
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'No se pudo actualizar el rol.');
+}
+
 // Referencia simbólica de base de datos (compatibilidad con la API previa).
 export const db = {
   firestoreDatabaseId: 'insforge-database'

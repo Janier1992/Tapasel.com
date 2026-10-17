@@ -22,6 +22,16 @@ export interface AuthedUser {
 // "PENDIENTE" (cuentas recién registradas sin aprobar) no figura: no opera en la API.
 const ROLES_VALIDOS: AppRole[] = ["ADMIN", "CFO", "RRHH", "COO"];
 
+// Permisos (pestañas) que concede cada rol. Los fija el servidor al aprobar un
+// usuario; el cliente solo elige el rol.
+export const ROLE_PERMISOS: Record<AppRole | "PENDIENTE", string[]> = {
+  ADMIN: ["panel", "finanzas", "rrhh", "documentos", "produccion", "configuracion"],
+  CFO: ["panel", "finanzas", "documentos"],
+  RRHH: ["panel", "rrhh", "produccion", "documentos"],
+  COO: ["panel", "produccion", "documentos"],
+  PENDIENTE: ["panel"],
+};
+
 /** Extrae el token de una cabecera `Authorization: Bearer <token>`. */
 export function getBearerToken(header: string | string[] | undefined): string | null {
   const value = Array.isArray(header) ? header[0] : header;
