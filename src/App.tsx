@@ -307,11 +307,11 @@ export default function App() {
       if (selectedFile) {
         const fileExt = selectedFile.name.split('.').pop();
         storagePath = `doc_${Date.now()}.${fileExt}`;
-        const { data: uploadData, error: uploadError } = await insforge.storage.from('documentos').upload(storagePath, selectedFile);
+        const { error: uploadError } = await insforge.storage.from('documentos').upload(storagePath, selectedFile);
         if (uploadError) {
           console.warn("Error uploading file:", uploadError);
         } else {
-          documentUrl = insforge.storage.from('documentos').getPublicUrl(storagePath).data.publicUrl;
+          documentUrl = insforge.storage.from('documentos').getPublicUrl(storagePath);
         }
       }
 
@@ -328,7 +328,7 @@ export default function App() {
         version: "v1.0.0",
         tamano: selectedFile ? `${(selectedFile.size / 1024).toFixed(1)} KB` : "840 KB",
         estadoVerificacion: "Verificado",
-        tipoDocumental: data.get('tipoDocumental') as string || "Contrato",
+        tipoDocumental: (data.get('tipoDocumental') as Documento['tipoDocumental']) || "Contrato",
         historialVersiones: [
           { 
             version: "v1.0.0", 

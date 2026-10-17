@@ -1564,8 +1564,7 @@ Al responder:
 app.put('/api/db/:table/:id', async (req, res) => {
   const { table, id } = req.params;
   try {
-    const adminClient = createAdminClient();
-    const { data, error } = await adminClient
+    const { data, error } = await insforge.database
       .from(table)
       .update(req.body)
       .eq('id', id)
@@ -1582,8 +1581,7 @@ app.put('/api/db/:table/:id', async (req, res) => {
 app.delete('/api/db/:table/:id', async (req, res) => {
   const { table, id } = req.params;
   try {
-    const adminClient = createAdminClient();
-    const { data, error } = await adminClient
+    const { data, error } = await insforge.database
       .from(table)
       .delete()
       .eq('id', id);

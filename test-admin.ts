@@ -1,8 +1,8 @@
-import { createClient } from '@insforge/sdk';
+import { createAdminClient } from '@insforge/sdk';
 import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
 
-const insforge = createClient({ 
+const insforge = createAdminClient({ 
   baseUrl: process.env.INSFORGE_PROJECT_URL,
   apiKey: process.env.INSFORGE_API_KEY 
 });

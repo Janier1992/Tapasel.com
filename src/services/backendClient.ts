@@ -172,6 +172,7 @@ class SessionManager {
         uid: parsed.id || 'demo-uid',
         email: parsed.email || 'colaborador@tapasel.co',
         displayName: parsed.nombre || 'Colaborador',
+        rol: parsed.rol as string | undefined,
         emailVerified: true,
         isAnonymous: false,
         tenantId: null,

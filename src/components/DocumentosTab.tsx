@@ -1,14 +1,14 @@
 import toast from 'react-hot-toast';
 import React, { useState } from 'react';
-import {   
-  Folder, 
-  FileText, 
-  FolderOpen, 
-  Search, 
-  FilePlus, 
-  History, 
-  ArrowRight, 
-  CheckCircle, 
+import {
+  Folder,
+  FileText,
+  FolderOpen,
+  Search,
+  FilePlus,
+  History,
+  ArrowRight,
+  CheckCircle,
   AlertCircle,
   TrendingDown,
   Activity,
@@ -17,14 +17,15 @@ import {
   ChevronRight,
   BrainCircuit,
   Calendar,
-  Pencil
-, Eye, Pencil, Trash, FileDown , Eye, Pencil, Trash, FileDown } from 'lucide-react';
+  Pencil,
+  Eye,
+  Trash,
+  FileDown,
+} from 'lucide-react';
 import { GenericViewModal, GenericEditModal } from './GenericModals';
-import { exportRecordToPDF, exportTableToPDF } from '../utils/pdfExport';
 import { apiDelete } from '../services/backendClient';
 
 import { exportRecordToPDF, exportTableToPDF } from '../utils/pdfExport';
-import toast from 'react-hot-toast';
 import { Documento, Usuario } from '../types';
 import { insforge } from '../services/backendClient';
 
@@ -105,7 +106,7 @@ export default function DocumentosTab({
       if (uploadError) {
         console.warn("Error uploading file:", uploadError);
       } else {
-        documentUrl = insforge.storage.from('documentos').getPublicUrl(storagePath).data.publicUrl;
+        documentUrl = insforge.storage.from('documentos').getPublicUrl(storagePath);
       }
     }
 
