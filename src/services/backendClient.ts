@@ -18,6 +18,7 @@
  */
 import { createClient } from '@insforge/sdk';
 import { Usuario } from '../types';
+import { PASSWORD_TOO_SHORT_MESSAGE } from '../lib/passwordPolicy';
 import { ERP_USUARIOS } from '../mockData';
 
 // URL pública del proyecto InsForge (no es secreta). Configurable por entorno.
@@ -207,7 +208,7 @@ function translateAuthError(message?: string): string {
   if (msg.includes('already') || msg.includes('unique')) return 'El usuario ya se encuentra registrado con este correo.';
   if (msg.includes('invalid') && msg.includes('credential')) return 'Credenciales inválidas. Verifique su correo y contraseña.';
   if (msg.includes('not verified') || msg.includes('email_not_verified')) return 'Debe confirmar su cuenta desde el correo electrónico para acceder.';
-  if (msg.includes('password')) return 'La contraseña debe tener al menos 6 caracteres.';
+  if (msg.includes('password')) return PASSWORD_TOO_SHORT_MESSAGE;
   if (msg.includes('invalid otp') || msg.includes('verification code') || msg.includes('incorrect code')) return 'Código de verificación inválido. Intente nuevamente.';
   if (msg.includes('not found')) return 'Usuario no encontrado en el sistema. Cree una cuenta primero.';
   return message;

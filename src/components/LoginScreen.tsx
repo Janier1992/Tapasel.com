@@ -1,22 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Key, Mail, ArrowRight, AlertCircle, Eye, EyeOff, UserPlus, LogIn, User, ChevronDown } from 'lucide-react';
+import { Key, Mail, ArrowRight, AlertCircle, Eye, EyeOff, UserPlus, LogIn, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { auth, db, doc, getDoc, setDoc, signInWithEmailAndPassword, verifyEmailCode, resendVerificationCode, sendPasswordResetEmail, confirmPasswordReset } from '../services/backendClient';
 import { Usuario } from '../types';
 import TapaselLogo from './TapaselLogo';
+import { MIN_PASSWORD_LENGTH, PASSWORD_TOO_SHORT_MESSAGE, isPasswordLongEnough } from '../lib/passwordPolicy';
 import { browserStore, createAttemptLimiter, formatLockMessage } from '../lib/attemptLimiter';
 
 interface LoginScreenProps {
   onLoginSuccess: (user: Usuario) => void;
 }
 
-
-const ROLES_DISPONIBLES = [
-  { value: 'ADMIN', label: 'Administrador general', permisos: ['panel','finanzas','rrhh','documentos','produccion','configuracion'] },
-  { value: 'CFO',   label: 'Director Ejecutivo', permisos: ['panel','finanzas','documentos'] },
-  { value: 'RRHH',  label: 'Gestión Talento Humano', permisos: ['panel','rrhh','produccion','documentos'] },
-  { value: 'COO',   label: 'Director de Operaciones', permisos: ['panel','produccion','documentos'] },
-];
 
 // Frenos de intentos por acción y correo. Login/verificación cuentan los fallos;
 // reenvío y recuperación (que envían correos) cuentan cada solicitud.
@@ -44,7 +38,7 @@ const translateError = (message: string): string => {
     return "Debe ir a tu correo electrónico y confirmar tu cuenta para poder acceder al aplicativo.";
   }
   if (msg.includes("password should be") || msg.includes("weak password")) {
-    return "La contraseña debe tener al menos 6 caracteres.";
+    return PASSWORD_TOO_SHORT_MESSAGE;
   }
   if (msg.includes("invalid otp") || msg.includes("invalid verification code") || msg.includes("incorrect code")) {
     return "Código de verificación inválido. Intente nuevamente.";
@@ -63,7 +57,6 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
   const [passwordInput, setPasswordInput] = useState('');
   const [nombreInput, setNombreInput]   = useState('');
   const [cargoInput, setCargoInput]     = useState('');
-  const [rolInput, setRolInput]         = useState('ADMIN');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -167,20 +160,19 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
       setErrorMessage('Todos los campos son obligatorios.');
       return;
     }
-    if (passwordInput.length < 6) {
-      setErrorMessage('La contraseña debe tener al menos 6 caracteres.');
+    if (!isPasswordLongEnough(passwordInput)) {
+      setErrorMessage(PASSWORD_TOO_SHORT_MESSAGE);
       return;
     }
     try {
-      const rolObj = ROLES_DISPONIBLES.find(r => r.value === rolInput) || ROLES_DISPONIBLES[0];
       const newUser: Usuario = {
         id: emailInput.trim().toLowerCase(),
         nombre: nombreInput.trim(),
         email: emailInput.trim().toLowerCase(),
-        cargo: cargoInput.trim() || rolObj.label,
-        rol: rolInput as Usuario['rol'],
+        cargo: cargoInput.trim() || 'Colaborador',
+        rol: 'PENDIENTE',
         avatarInitials: nombreInput.trim().split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase(),
-        permisos: rolObj.permisos,
+        permisos: ['panel'],
       };
       const result = await setDoc(doc(db, 'usuarios', newUser.id), { ...newUser, password: passwordInput }) as any;
       if (result && result.requireEmailVerification) {
@@ -257,8 +249,8 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
       setErrorMessage('Todos los campos son obligatorios.');
       return;
     }
-    if (resetPasswordInput.length < 6) {
-      setErrorMessage('La contraseña debe tener al menos 6 caracteres.');
+    if (!isPasswordLongEnough(resetPasswordInput)) {
+      setErrorMessage(PASSWORD_TOO_SHORT_MESSAGE);
       return;
     }
     if (resetPasswordInput !== confirmResetPasswordInput) {
@@ -279,8 +271,6 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
     }
   };
 
-
-  const selectedRolObj = ROLES_DISPONIBLES.find(r => r.value === rolInput) || ROLES_DISPONIBLES[0];
 
   return (
     <div className="min-h-screen bg-white flex flex-col justify-center items-center p-4 sm:p-6 antialiased font-sans relative overflow-hidden">
@@ -509,7 +499,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
             {/* New Password */}
             <div className="space-y-1.5">
               <label className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block font-bold">
-                Nueva Contraseña (mín. 6 caracteres)
+                Nueva Contraseña (mín. {MIN_PASSWORD_LENGTH} caracteres)
               </label>
               <div className="relative">
                 <Key className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -628,7 +618,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
             {/* Password */}
             <div className="space-y-1.5">
               <label className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block font-bold">
-                Contraseña (mín. 6 caracteres)
+                Contraseña (mín. {MIN_PASSWORD_LENGTH} caracteres)
               </label>
               <div className="relative">
                 <Key className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -650,27 +640,9 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
               </div>
             </div>
 
-            {/* Rol */}
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block font-bold">
-                Rol en el Sistema
-              </label>
-              <div className="relative">
-                <select
-                  value={rolInput}
-                  onChange={e => setRolInput(e.target.value)}
-                  className="w-full appearance-none bg-slate-50 border border-slate-200 focus:border-brand-primary rounded-xl py-3 pl-4 pr-8 text-xs text-slate-800 outline-none transition-all focus:ring-1 focus:ring-brand-primary/30 cursor-pointer"
-                >
-                  {ROLES_DISPONIBLES.map(r => (
-                    <option key={r.value} value={r.value}>{r.label}</option>
-                  ))}
-                </select>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
-              <p className="text-[9px] text-slate-400 font-mono">
-                Permisos: {selectedRolObj.permisos.join(', ')}
-              </p>
-            </div>
+            <p className="text-[10px] text-slate-500 font-mono leading-snug">
+              Su cuenta quedará pendiente hasta que un administrador le asigne un rol y sus permisos.
+            </p>
 
             <button
               type="submit"
