@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { auth, db, doc, getDoc, setDoc, signInWithEmailAndPassword, verifyEmailCode, resendVerificationCode, sendPasswordResetEmail, confirmPasswordReset } from '../services/backendClient';
 import { Usuario } from '../types';
 import TapaselLogo from './TapaselLogo';
+import { browserStore, createAttemptLimiter, formatLockMessage } from '../lib/attemptLimiter';
 
 interface LoginScreenProps {
   onLoginSuccess: (user: Usuario) => void;
@@ -17,9 +18,19 @@ const ROLES_DISPONIBLES = [
   { value: 'COO',   label: 'Director de Operaciones', permisos: ['panel','produccion','documentos'] },
 ];
 
+// Frenos de intentos por acción y correo. Login/verificación cuentan los fallos;
+// reenvío y recuperación (que envían correos) cuentan cada solicitud.
+const loginLimiter = (email: string) => createAttemptLimiter(browserStore(), 'login', email);
+const verifyLimiter = (email: string) => createAttemptLimiter(browserStore(), 'verify', email);
+const emailLimiter = (action: 'resend' | 'forgot', email: string) =>
+  createAttemptLimiter(browserStore(), action, email, { maxAttempts: 3, baseLockMs: 60_000 });
+
 const translateError = (message: string): string => {
   if (!message) return 'Ha ocurrido un error inesperado. Intente nuevamente.';
   const msg = message.toLowerCase();
+  if (msg.includes("rate_limited") || msg.includes("rate limit") || msg.includes("too many")) {
+    return "Demasiados intentos. Espere unos minutos antes de intentar de nuevo.";
+  }
   if (msg.includes("signups are disabled") || msg.includes("signup is disabled")) {
     return "El registro de usuarios está desactivado para este proyecto.";
   }
@@ -78,8 +89,15 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
 
   const handleResendCode = async () => {
     if (!verificationEmail) return;
+    const limiter = emailLimiter('resend', verificationEmail);
+    const gate = limiter.check();
+    if (!gate.allowed) {
+      setErrorMessage(formatLockMessage(gate.retryAfterMs));
+      return;
+    }
     setResendStatus('sending');
     setErrorMessage('');
+    limiter.recordFailure();
     try {
       await resendVerificationCode(verificationEmail);
       setResendStatus('success');
@@ -113,6 +131,12 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
       setErrorMessage('Por favor ingrese su correo electrónico institucional.');
       return;
     }
+    const limiter = loginLimiter(emailInput);
+    const gate = limiter.check();
+    if (!gate.allowed) {
+      setErrorMessage(formatLockMessage(gate.retryAfterMs));
+      return;
+    }
     try {
       const result = await signInWithEmailAndPassword(auth, emailInput.trim(), passwordInput) as any;
       if (result && result.requireEmailVerification) {
@@ -125,9 +149,13 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
         setErrorMessage('Usuario no encontrado en el sistema. Cree una cuenta primero.');
         return;
       }
+      limiter.reset();
       onLoginSuccess(userDoc.data() as Usuario);
     } catch (err: any) {
-      setErrorMessage(translateError(err.message || 'Credenciales inválidas. Verifique su correo y contraseña.'));
+      const after = limiter.recordFailure();
+      setErrorMessage(after.allowed
+        ? translateError(err.message || 'Credenciales inválidas. Verifique su correo y contraseña.')
+        : formatLockMessage(after.retryAfterMs));
     }
   };
 
@@ -174,11 +202,21 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
       setErrorMessage('Por favor ingrese el código de 6 dígitos.');
       return;
     }
+    const limiter = verifyLimiter(verificationEmail);
+    const gate = limiter.check();
+    if (!gate.allowed) {
+      setErrorMessage(formatLockMessage(gate.retryAfterMs));
+      return;
+    }
     try {
       const loggedInUser = await verifyEmailCode(verificationEmail, verificationCode.trim());
+      limiter.reset();
       onLoginSuccess(loggedInUser as Usuario);
     } catch (err: any) {
-      setErrorMessage(translateError(err.message || 'Código de verificación inválido. Intente nuevamente.'));
+      const after = limiter.recordFailure();
+      setErrorMessage(after.allowed
+        ? translateError(err.message || 'Código de verificación inválido. Intente nuevamente.')
+        : formatLockMessage(after.retryAfterMs));
     }
   };
 
@@ -191,6 +229,13 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
       setErrorMessage('Por favor ingrese su correo electrónico institucional.');
       return;
     }
+    const limiter = emailLimiter('forgot', emailInput);
+    const gate = limiter.check();
+    if (!gate.allowed) {
+      setErrorMessage(formatLockMessage(gate.retryAfterMs));
+      return;
+    }
+    limiter.recordFailure();
     setIsSubmittingReset(true);
     try {
       await sendPasswordResetEmail(emailInput.trim());

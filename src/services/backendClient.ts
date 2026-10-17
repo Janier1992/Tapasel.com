@@ -202,6 +202,7 @@ async function fetchPerfilUsuario(authUser: any, email: string): Promise<Usuario
 function translateAuthError(message?: string): string {
   if (!message) return 'Ha ocurrido un error inesperado.';
   const msg = message.toLowerCase();
+  if (msg.includes('rate_limited') || msg.includes('rate limit') || msg.includes('too many')) return 'Demasiados intentos. Espere unos minutos antes de intentar de nuevo.';
   if (msg.includes('signup') && msg.includes('disabled')) return 'El registro de usuarios está desactivado.';
   if (msg.includes('already') || msg.includes('unique')) return 'El usuario ya se encuentra registrado con este correo.';
   if (msg.includes('invalid') && msg.includes('credential')) return 'Credenciales inválidas. Verifique su correo y contraseña.';
