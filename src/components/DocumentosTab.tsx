@@ -27,7 +27,7 @@ import { apiDelete } from '../services/backendClient';
 
 import { exportRecordToPDF, exportTableToPDF } from '../utils/pdfExport';
 import { Documento, Usuario } from '../types';
-import { insforge } from '../services/backendClient';
+import { uploadDocumentFile, downloadDocumentFile } from '../services/backendClient';
 
 interface DocumentosTabProps {
   documentos: Documento[];
@@ -96,17 +96,15 @@ export default function DocumentosTab({
     if (!docNombre || !docResp) return;
 
     setIsUploading(true);
-    let documentUrl = '';
     let storagePath = '';
 
     if (selectedFile) {
-      const fileExt = selectedFile.name.split('.').pop();
-      storagePath = `doc_${Date.now()}.${fileExt}`;
-      const { error: uploadError } = await insforge.storage.from('documentos').upload(storagePath, selectedFile);
-      if (uploadError) {
-        console.warn("Error uploading file:", uploadError);
-      } else {
-        documentUrl = insforge.storage.from('documentos').getPublicUrl(storagePath);
+      try {
+        storagePath = await uploadDocumentFile(selectedFile);
+      } catch (err: any) {
+        toast.error(err.message || 'No se pudo subir el archivo.');
+        setIsUploading(false);
+        return;
       }
     }
 
@@ -124,14 +122,14 @@ export default function DocumentosTab({
         tamano: selectedFile ? `${(selectedFile.size / 1024).toFixed(1)} KB` : `${(Math.random() * 15 + 1).toFixed(1)} MB`,
         estadoVerificacion: "Chequeo Neural",
         tipoDocumental: "Legal",
-        archivo_url: documentUrl,
+        tieneArchivo: !!storagePath,
         storage_path: storagePath,
         historialVersiones: [
           {
             version: "v1.0.0",
             fecha: new Date().toISOString().replace('T', ' ').substring(0, 16),
             usuario: docResp,
-            comentario: documentUrl ? `Documento físico subido: ${documentUrl}` : docExplicacion || "Radicación inicial y escaneo OCR del archivo físico."
+            comentario: storagePath ? `Documento físico subido: ${selectedFile?.name}` : docExplicacion || "Radicación inicial y escaneo OCR del archivo físico."
           }
         ]
       });
@@ -638,6 +636,18 @@ export default function DocumentosTab({
                     </div>
                   </form>
                 </div>
+
+                {selectedDoc.tieneArchivo && (
+                  <div className="p-4 border-t border-slate-200 text-center">
+                    <button
+                      type="button"
+                      onClick={() => downloadDocumentFile(selectedDoc.id, selectedDoc.nombre).catch((err) => toast.error(err.message))}
+                      className="text-emerald-700 hover:underline font-mono text-[10px] font-bold uppercase tracking-wider bg-transparent border-none cursor-pointer"
+                    >
+                      Descargar archivo
+                    </button>
+                  </div>
+                )}
 
                 {/* Prompt search helper buttons */}
                 <div className="p-4 bg-slate-100/60 border-t border-slate-200 text-center">

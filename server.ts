@@ -862,6 +862,36 @@ async function startServer() {
   // DOCUMENTOS API ENDPOINTS
   // ─────────────────────────────────────────────────────────────
 
+  // Entrega el archivo de un documento desde el bucket privado. Solo sirve rutas
+  // registradas en `documentos.storage_path`, tras validar sesión y rol.
+  app.get("/api/documentos/:id/archivo", async (req, res) => {
+    try {
+      const role = getRole(req);
+      if (role !== 'ADMIN' && role !== 'CFO' && role !== 'RRHH' && role !== 'COO') {
+        return res.status(403).json({ error: "No autorizado." });
+      }
+      const { data: row, error } = await insforge.database
+        .from("documentos")
+        .select("nombre, storage_path")
+        .eq("id", req.params.id)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      if (!row?.storage_path) return res.status(404).json({ error: "El documento no tiene archivo." });
+
+      const { data: blob, error: dlError } = await insforge.storage.from("documentos").download(row.storage_path);
+      if (dlError || !blob) throw new Error(dlError?.message || "Archivo no disponible.");
+
+      const filename = String(row.nombre || "documento").replace(/[^\w.\- ]+/g, "_");
+      res.setHeader("Content-Type", blob.type || "application/octet-stream");
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      res.setHeader("Cache-Control", "private, no-store");
+      res.send(Buffer.from(await blob.arrayBuffer()));
+    } catch (err: any) {
+      console.error(`Error en GET /api/documentos/${req.params.id}/archivo:`, err.message);
+      res.status(500).json({ error: "No se pudo obtener el archivo." });
+    }
+  });
+
   app.get("/api/documentos", async (req, res) => {
     try {
       const role = getRole(req);
@@ -904,6 +934,7 @@ async function startServer() {
           tamano: d.tamano || '',
           estadoVerificacion: d.estado_verificacion,
           tipoDocumental: d.tipo_documental,
+          tieneArchivo: !!d.storage_path,
           historialVersiones: history
         };
       });

@@ -87,6 +87,48 @@ export async function apiInsert(table: string, data: any) {
   }
 }
 
+// ─────────────────────────────────────────────────────────────
+// ARCHIVOS DE DOCUMENTOS (bucket privado)
+// ─────────────────────────────────────────────────────────────
+// El bucket `documentos` es privado: no hay URL pública. Se guarda solo la ruta
+// interna (`storage_path`) y la descarga pasa por /api/documentos/:id/archivo,
+// donde el servidor verifica la sesión y el rol antes de entregar el archivo.
+const ALLOWED_DOC_EXTENSIONS = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'csv', 'txt', 'png', 'jpg', 'jpeg'];
+const MAX_DOC_BYTES = 20 * 1024 * 1024;
+
+/** uploadDocumentFile — Sube un archivo al bucket privado y devuelve su ruta interna. */
+export async function uploadDocumentFile(file: File): Promise<string> {
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  if (!ALLOWED_DOC_EXTENSIONS.includes(ext)) {
+    throw new Error(`Tipo de archivo no permitido (.${ext}). Use: ${ALLOWED_DOC_EXTENSIONS.join(', ')}.`);
+  }
+  if (file.size > MAX_DOC_BYTES) {
+    throw new Error('El archivo supera el máximo de 20 MB.');
+  }
+  const storagePath = `${crypto.randomUUID()}.${ext}`;
+  const { error } = await insforge.storage.from('documentos').upload(storagePath, file);
+  if (error) throw new Error(error.message || 'No se pudo subir el archivo.');
+  return storagePath;
+}
+
+/** downloadDocumentFile — Descarga el archivo de un documento a través del servidor. */
+export async function downloadDocumentFile(docId: string, nombre: string) {
+  const res = await fetch(`/api/documentos/${encodeURIComponent(docId)}/archivo`, {
+    headers: await getAuthHeaders()
+  });
+  if (!res.ok) {
+    let msg = 'No se pudo descargar el archivo.';
+    try { msg = (await res.json()).error || msg; } catch (_) { /* respuesta no JSON */ }
+    throw new Error(msg);
+  }
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nombre;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
 // Referencia simbólica de base de datos (compatibilidad con la API previa).
 export const db = {
   firestoreDatabaseId: 'insforge-database'

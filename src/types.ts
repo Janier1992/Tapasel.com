@@ -53,7 +53,8 @@ export interface Documento {
   tamano: string;
   estadoVerificacion: 'Verificado' | 'Chequeo Neural' | 'Pendiente Verificación';
   tipoDocumental: 'Contrato' | 'Incapacidad' | 'Vacaciones' | 'Certificado' | 'Legal' | 'Financia';
-  archivo_url?: string;
+  tieneArchivo?: boolean;
+  /** Ruta interna en el bucket privado; solo viaja del formulario al servidor. */
   storage_path?: string;
   historialVersiones: Array<{
     version: string;
